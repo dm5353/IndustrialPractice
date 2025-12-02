@@ -1,0 +1,100 @@
+﻿<Window x:Class="MyFinance.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:MyFinance.ViewModels"
+        xmlns:local="clr-namespace:MyFinance.Converters"
+        xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+        Title="Мои финансы" Height="700" Width="750">
+
+    <Window.Resources>
+        <local:NullToBoolConverter x:Key="NullToBoolConverter"/>
+    </Window.Resources>
+
+    <Window.DataContext>
+        <vm:MainViewModel/>
+    </Window.DataContext>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Верхняя панель: баланс, доходы/расходы, кнопки + диаграмма -->
+            <RowDefinition Height="*"/>
+            <!-- История операций -->
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="450"/>
+                <ColumnDefinition Width="250"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Левая панель: Баланс + Доходы/Расходы + Кнопки -->
+            <StackPanel Grid.Column="0" HorizontalAlignment="Left">
+                <!-- Баланс -->
+                <Border Background="#FFEEEEEE" Padding="20" CornerRadius="5" Margin="10,0,10,20">
+                    <StackPanel>
+                        <TextBlock Text="Баланс" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding TotalBalance, StringFormat=C}" FontSize="24" FontWeight="Bold" Foreground="Black" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Доходы/Расходы -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,20">
+                    <Border Background="#FFEEEEEE" Padding="20" Margin="10" CornerRadius="5" Width="200">
+                        <StackPanel>
+                            <TextBlock Text="Расходы" FontSize="18" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding TotalExpenses, StringFormat=C}" FontSize="20" Foreground="Red"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="#FFEEEEEE" Padding="20" Margin="10" CornerRadius="5" Width="200">
+                        <StackPanel>
+                            <TextBlock Text="Доходы" FontSize="18" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding TotalIncome, StringFormat=C}" FontSize="20" Foreground="Green"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Кнопки CRUD -->
+                <Grid Margin="5,0,5,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Content="Добавить" Margin="5" Command="{Binding AddTransactionCommand}" HorizontalAlignment="Stretch"/>
+                    <Button Grid.Column="1" Content="Изменить" Margin="5" Command="{Binding EditTransactionCommand}" CommandParameter="{Binding SelectedTransaction}" 
+                        IsEnabled="{Binding SelectedTransaction, Converter={StaticResource NullToBoolConverter}}" HorizontalAlignment="Stretch"/>
+                    <Button Grid.Column="2" Content="Удалить" Margin="5" Command="{Binding DeleteTransactionCommand}" CommandParameter="{Binding SelectedTransaction}" 
+                        IsEnabled="{Binding SelectedTransaction, Converter={StaticResource NullToBoolConverter}}" HorizontalAlignment="Stretch"/>
+                </Grid>
+            </StackPanel>
+
+            <!-- Правая панель: круговая диаграмма -->
+            <Border Grid.Column="1" CornerRadius="5" Padding="0" Margin="0,0,0,0">
+                <lvc:PieChart Series="{Binding PieSeries}" LegendLocation="None" Margin="0,0,0,60" />
+            </Border>
+        </Grid>
+
+        <!-- История операций -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <ListBox HorizontalAlignment="Left" ItemsSource="{Binding Transactions}" SelectedItem="{Binding SelectedTransaction}" BorderThickness="0">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="#FFF5F5F5" CornerRadius="5" Padding="10" Margin="0,0,0,0" BorderBrush="#FFCCCCCC" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Date, StringFormat=d}" Width="100"/>
+                                <TextBlock Text="{Binding Type}" Width="80"/>
+                                <TextBlock Text="{Binding CategoryId}" Width="120"/>
+                                <TextBlock Text="{Binding AccountId}" Width="120"/>
+                                <TextBlock Text="{Binding Amount, StringFormat=C}" Width="100"/>
+                                <TextBlock Text="{Binding Note}" Width="175"/>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </ScrollViewer>
+
+    </Grid>
+</Window>
