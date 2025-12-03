@@ -11,7 +11,7 @@ using MyFinance.Services;
 namespace MyFinance.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251201225917_InitialCreate")]
+    [Migration("20251203214510_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -43,6 +43,10 @@ namespace MyFinance.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -89,7 +93,30 @@ namespace MyFinance.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AccountId");
+
+                    b.HasIndex("CategoryId");
+
                     b.ToTable("Transactions");
+                });
+
+            modelBuilder.Entity("MyFinance.Models.Transaction", b =>
+                {
+                    b.HasOne("MyFinance.Models.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MyFinance.Models.Category", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+
+                    b.Navigation("Category");
                 });
 #pragma warning restore 612, 618
         }

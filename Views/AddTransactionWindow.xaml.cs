@@ -20,12 +20,7 @@ namespace MyFinance.Views
 
             // Заполняем ComboBox
             CategoryComboBox.ItemsSource = _db.Categories.ToList();
-            CategoryComboBox.DisplayMemberPath = "Name";
-            CategoryComboBox.SelectedValuePath = "Id";
-
             AccountComboBox.ItemsSource = _db.Accounts.ToList();
-            AccountComboBox.DisplayMemberPath = "Name";
-            AccountComboBox.SelectedValuePath = "Id";
 
             // Устанавливаем значения из переданной транзакции
             NameTextBox.Text = transaction.Name;
@@ -50,32 +45,6 @@ namespace MyFinance.Views
             _db = new AppDbContext();
             DatePicker.SelectedDate = DateTime.Now.Date;
             TimeTextBox.Text = DateTime.Now.ToString("HH:mm");
-
-            if (!_db.Accounts.Any())
-            {
-                _db.Accounts.Add(new Account { Name = "Карта", Balance = 0 });
-                _db.Accounts.Add(new Account { Name = "Наличные", Balance = 0 });
-            }
-
-            if (!_db.Categories.Any())
-            {
-                // Доходы
-                _db.Categories.Add(new Category { Name = "Зарплата", Type = "Income" });
-                _db.Categories.Add(new Category { Name = "Подарок", Type = "Income" });
-                _db.Categories.Add(new Category { Name = "Проценты по вкладу", Type = "Income" });
-                _db.Categories.Add(new Category { Name = "Кешбек", Type = "Income" });
-
-                // Расходы
-                _db.Categories.Add(new Category { Name = "Еда", Type = "Expense" });
-                _db.Categories.Add(new Category { Name = "Транспорт", Type = "Expense" });
-                _db.Categories.Add(new Category { Name = "Развлечения", Type = "Expense" });
-                _db.Categories.Add(new Category { Name = "Одежда", Type = "Expense" });
-                _db.Categories.Add(new Category { Name = "Медицина", Type = "Expense" });
-                _db.Categories.Add(new Category { Name = "Коммунальные платежи", Type = "Expense" });
-                _db.Categories.Add(new Category { Name = "Образование", Type = "Expense" });
-            }
-
-            _db.SaveChanges();
 
             // Заполняем ComboBox категории и счета из БД
             CategoryComboBox.ItemsSource = _db.Categories.ToList();

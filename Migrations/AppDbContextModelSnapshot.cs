@@ -41,6 +41,10 @@ namespace MyFinance.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -86,7 +90,30 @@ namespace MyFinance.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AccountId");
+
+                    b.HasIndex("CategoryId");
+
                     b.ToTable("Transactions");
+                });
+
+            modelBuilder.Entity("MyFinance.Models.Transaction", b =>
+                {
+                    b.HasOne("MyFinance.Models.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MyFinance.Models.Category", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+
+                    b.Navigation("Category");
                 });
 #pragma warning restore 612, 618
         }

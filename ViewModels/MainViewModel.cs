@@ -132,13 +132,17 @@ namespace MyFinance.ViewModels
         [RelayCommand]
         private void OpenCategory()
         {
-            LoadTransactions();
+            var window = new Views.ManageCategoriesWindow();
+            window.Owner = App.Current.MainWindow;
+            window.ShowDialog();
         }
 
         [RelayCommand]
         private void OpenAccount()
         {
-            LoadTransactions();
+            var window = new Views.ManageAccountsWindow();
+            window.Owner = App.Current.MainWindow;
+            window.ShowDialog();
         }
 
         private void UpdateTotals()
