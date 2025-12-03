@@ -3,10 +3,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:MyFinance.Converters"
         xmlns:vm="clr-namespace:MyFinance.ViewModels"
-        Title="Категории" Height="450" Width="400">
+        Title="Категории" Height="450" Width="450" ResizeMode="NoResize">
 
     <Window.Resources>
         <local:StringToBrushConverter x:Key="StringToBrushConverter"/>
+        <local:NullToBoolConverter x:Key="NullToBoolConverter"/>
     </Window.Resources>
 
     <Window.DataContext>
@@ -14,17 +15,46 @@
     </Window.DataContext>
 
     <Grid Margin="10">
-        <ListBox ItemsSource="{Binding Categories}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="281*"/>
+            <ColumnDefinition Width="99*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+
+        <!-- Кнопки -->
+        <StackPanel Orientation="Horizontal" Margin="0 0 0 10" Grid.ColumnSpan="2">
+            <Button Content="Добавить" Width="120" Margin="0 0 10 0"
+                Command="{Binding AddCategoryCommand}"/>
+
+            <Button Content="Удалить" Width="120"
+                Command="{Binding DeleteCategoryCommand}"
+                IsEnabled="{Binding SelectedCategory, Converter={StaticResource NullToBoolConverter}}"/>
+        </StackPanel>
+
+        <!-- Список категорий -->
+        <ListBox Grid.Row="1"
+         ItemsSource="{Binding Categories}"
+         SelectedItem="{Binding SelectedCategory}"
+         Grid.ColumnSpan="2">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Columns="2" />
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal" Margin="5">
                         <Rectangle Width="16" Height="16"
-                                   Fill="{Binding Color, Converter={StaticResource StringToBrushConverter}}"
-                                   Margin="0 0 8 0"/>
+                           Fill="{Binding Color, Converter={StaticResource StringToBrushConverter}}"
+                           Margin="0 0 8 0"/>
                         <TextBlock Text="{Binding Name}" FontSize="14"/>
                     </StackPanel>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
+
     </Grid>
 </Window>

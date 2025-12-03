@@ -112,17 +112,21 @@ namespace MyFinance.ViewModels
         {
             if (transaction == null) return;
 
+            // Найти сущность в контексте
+            var trackedTransaction = _db.Transactions.FirstOrDefault(t => t.Id == transaction.Id);
+            if (trackedTransaction == null) return; // уже удалена
+
             // Найти счёт
-            var account = _db.Accounts.FirstOrDefault(a => a.Id == transaction.AccountId);
+            var account = _db.Accounts.FirstOrDefault(a => a.Id == trackedTransaction.AccountId);
             if (account != null)
             {
-                if (transaction.Type == "Income")
-                    account.Balance -= transaction.Amount; // уменьшаем доход
+                if (trackedTransaction.Type == "Income")
+                    account.Balance -= trackedTransaction.Amount; // уменьшаем доход
                 else
-                    account.Balance += transaction.Amount; // возвращаем расход
+                    account.Balance += trackedTransaction.Amount; // возвращаем расход
             }
 
-            _db.Transactions.Remove(transaction);
+            _db.Transactions.Remove(trackedTransaction);
             _db.SaveChanges();
 
             Transactions.Remove(transaction);
