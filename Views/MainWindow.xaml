@@ -4,10 +4,26 @@
         xmlns:vm="clr-namespace:MyFinance.ViewModels"
         xmlns:local="clr-namespace:MyFinance.Converters"
         xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
-        Title="Мои финансы" Height="700" Width="750">
+        xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+        Title="Мои финансы" Height="700" Width="715" MinWidth="715" MaxWidth="715" MinHeight="500">
 
     <Window.Resources>
+        <local:DateLabelConverter x:Key="DateLabelConverter"/>
+        <local:DateOnlyConverter x:Key="DateOnlyConverter"/>
         <local:NullToBoolConverter x:Key="NullToBoolConverter"/>
+        <local:AmountWithSpaceConverter x:Key="AmountWithSpaceConverter"/>
+
+        <CollectionViewSource x:Key="GroupedTransactions" Source="{Binding Transactions}">
+            <!-- Группировка по дате без времени -->
+            <CollectionViewSource.GroupDescriptions>
+                <PropertyGroupDescription PropertyName="Date" Converter="{StaticResource DateOnlyConverter}"/>
+            </CollectionViewSource.GroupDescriptions>
+
+            <!-- Сортировка внутри групп: новые сначала -->
+            <CollectionViewSource.SortDescriptions>
+                <componentModel:SortDescription PropertyName="Date" Direction="Descending"/>
+            </CollectionViewSource.SortDescriptions>
+        </CollectionViewSource>
     </Window.Resources>
 
     <Window.DataContext>
@@ -17,12 +33,14 @@
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <!-- Верхняя панель: баланс, доходы/расходы, кнопки + диаграмма -->
+            <!-- Верхняя панель -->
+            <RowDefinition Height="Auto"/>
+            <!-- Заголовок Истории -->
             <RowDefinition Height="*"/>
-            <!-- История операций -->
+            <!-- Список операций -->
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="0,0,0,20">
+        <Grid Grid.Row="0" Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="450"/>
                 <ColumnDefinition Width="250"/>
@@ -31,26 +49,26 @@
             <!-- Левая панель: Баланс + Доходы/Расходы + Кнопки -->
             <StackPanel Grid.Column="0" HorizontalAlignment="Left">
                 <!-- Баланс -->
-                <Border Background="#FFEEEEEE" Padding="20" CornerRadius="5" Margin="10,0,10,20">
+                <Border Background="#FFEEEEEE" Padding="20" CornerRadius="5" Margin="10,0,10,10">
                     <StackPanel>
                         <TextBlock Text="Баланс" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center"/>
-                        <TextBlock Text="{Binding TotalBalance, StringFormat=C}" FontSize="24" FontWeight="Bold" Foreground="Black" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding TotalBalance, Converter={StaticResource AmountWithSpaceConverter}}" FontSize="24" FontWeight="Bold" Foreground="Black" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
 
                 <!-- Доходы/Расходы -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,20">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
                     <Border Background="#FFEEEEEE" Padding="20" Margin="10" CornerRadius="5" Width="200">
                         <StackPanel>
                             <TextBlock Text="Расходы" FontSize="18" FontWeight="Bold"/>
-                            <TextBlock Text="{Binding TotalExpenses, StringFormat=C}" FontSize="20" Foreground="Red"/>
+                            <TextBlock Text="{Binding TotalExpenses, Converter={StaticResource AmountWithSpaceConverter}}" FontSize="20" Foreground="Red"/>
                         </StackPanel>
                     </Border>
 
                     <Border Background="#FFEEEEEE" Padding="20" Margin="10" CornerRadius="5" Width="200">
                         <StackPanel>
                             <TextBlock Text="Доходы" FontSize="18" FontWeight="Bold"/>
-                            <TextBlock Text="{Binding TotalIncome, StringFormat=C}" FontSize="20" Foreground="Green"/>
+                            <TextBlock Text="{Binding TotalIncome, Converter={StaticResource AmountWithSpaceConverter}}" FontSize="20" Foreground="Green"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -72,29 +90,101 @@
 
             <!-- Правая панель: круговая диаграмма -->
             <Border Grid.Column="1" CornerRadius="5" Padding="0" Margin="0,0,0,0">
-                <lvc:PieChart Series="{Binding PieSeries}" LegendLocation="None" Margin="0,0,0,60" />
+                <lvc:PieChart Series="{Binding PieSeries}" LegendLocation="None" Margin="0,0,10,54" />
             </Border>
         </Grid>
-
+            
         <!-- История операций -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <ListBox HorizontalAlignment="Left" ItemsSource="{Binding Transactions}" SelectedItem="{Binding SelectedTransaction}" BorderThickness="0">
+        <TextBlock Grid.Row="1"
+           Text="История операций:"
+           FontSize="18"
+           FontWeight="Bold"
+           Margin="10,0,0,0"/>
+        <ScrollViewer HorizontalAlignment="Left" Grid.Row="2" VerticalScrollBarVisibility="Auto" Width="670" CanContentScroll="True">
+            <ListBox  HorizontalAlignment="Left" Width="640" ItemsSource="{Binding Source={StaticResource GroupedTransactions}}" 
+             SelectedItem="{Binding SelectedTransaction}" BorderThickness="0">
+
+                <!-- Шаблон группы (заголовок с датой) -->
+                <ListBox.GroupStyle>
+                    <GroupStyle>
+                        <GroupStyle.HeaderTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Name, Converter={StaticResource DateLabelConverter}}"
+                       FontWeight="Bold"
+                       Margin="10 10 0 5"/>
+                            </DataTemplate>
+                        </GroupStyle.HeaderTemplate>
+                    </GroupStyle>
+                </ListBox.GroupStyle>
+
+                <!-- Шаблон одной операции -->
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <Border Background="#FFF5F5F5" CornerRadius="5" Padding="10" Margin="0,0,0,0" BorderBrush="#FFCCCCCC" BorderThickness="1">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding Date, StringFormat=d}" Width="100"/>
-                                <TextBlock Text="{Binding Type}" Width="80"/>
-                                <TextBlock Text="{Binding CategoryId}" Width="120"/>
-                                <TextBlock Text="{Binding AccountId}" Width="120"/>
-                                <TextBlock Text="{Binding Amount, StringFormat=C}" Width="100"/>
-                                <TextBlock Text="{Binding Note}" Width="175"/>
-                            </StackPanel>
+                        <Border Background="#FFF5F5F5" CornerRadius="5"
+        Padding="10" Margin="0,0,0,0"
+        BorderBrush="#FFCCCCCC" BorderThickness="1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="200"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Название и категория -->
+                                <StackPanel Grid.Column="0" Orientation="Vertical">
+                                    <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
+                                    <TextBlock Text="{Binding Category.Name}" FontStyle="Italic" FontSize="12"/>
+                                </StackPanel>
+
+                                <!-- СУММА -->
+                                <TextBlock Grid.Column="1" VerticalAlignment="Center"  HorizontalAlignment="Right" Margin="0,0,5,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="Black"/>
+                                            <Setter Property="Text" Value="{Binding Amount, Converter={StaticResource AmountWithSpaceConverter}}"/>
+                                            <Style.Triggers>
+                                                <!-- Доход -->
+                                                <DataTrigger Binding="{Binding Type}" Value="Income">
+                                                    <Setter Property="Foreground" Value="Green"/>
+                                                    <Setter Property="Text">
+                                                        <Setter.Value>
+                                                            <MultiBinding StringFormat="+ {0}">
+                                                                <Binding Path="Amount" Converter="{StaticResource AmountWithSpaceConverter}"/>
+                                                            </MultiBinding>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </DataTrigger>
+
+                                                <!-- Расход -->
+                                                <DataTrigger Binding="{Binding Type}" Value="Expense">
+                                                    <Setter Property="Foreground" Value="Red"/>
+                                                    <Setter Property="Text">
+                                                        <Setter.Value>
+                                                            <MultiBinding StringFormat="- {0}">
+                                                                <Binding Path="Amount" Converter="{StaticResource AmountWithSpaceConverter}"/>
+                                                            </MultiBinding>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+
+                                <!-- Имя счета -->
+                                <TextBlock Text="{Binding Account.Name}" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0"/>
+                                <!-- Примечание -->
+                                <TextBlock Text="{Binding Note}" Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                            </Grid>
                         </Border>
+
                     </DataTemplate>
                 </ListBox.ItemTemplate>
+
             </ListBox>
         </ScrollViewer>
+
 
     </Grid>
 </Window>

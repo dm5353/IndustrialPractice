@@ -2,8 +2,10 @@
 using CommunityToolkit.Mvvm.Input;
 using LiveCharts;
 using LiveCharts.Wpf;
+using Microsoft.EntityFrameworkCore;
 using MyFinance.Models;
 using MyFinance.Services;
+using MyFinance.Views;
 using System.Collections.ObjectModel;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
@@ -35,13 +37,19 @@ namespace MyFinance.ViewModels
             _db.Database.EnsureCreated();
 
             LoadTransactions();
-            UpdatePieSeries();
         }
 
         private void LoadTransactions()
         {
             Transactions.Clear();
-            foreach (var tx in _db.Transactions.OrderByDescending(t => t.Date))
+
+            var transactions = _db.Transactions
+                .Include(t => t.Category)   // подтягиваем категорию
+                .Include(t => t.Account)    // подтягиваем счет
+                .OrderByDescending(t => t.Date)
+                .ToList();
+
+            foreach (var tx in transactions)
                 Transactions.Add(tx);
 
             UpdateTotals();
@@ -58,8 +66,7 @@ namespace MyFinance.ViewModels
                 _db.Transactions.Add(tx);
                 _db.SaveChanges();
                 Transactions.Insert(0, tx); // вставляем сверху
-                UpdateTotals();
-                UpdatePieSeries();
+                LoadTransactions();
             }
         }
 
@@ -68,7 +75,34 @@ namespace MyFinance.ViewModels
         private void EditTransaction(Transaction transaction)
         {
             if (transaction == null) return;
-            // Логика редактирования через окно диалога
+
+            // Создаём окно и передаём существующую транзакцию
+            var editWindow = new AddTransactionWindow(transaction); // нужно добавить конструктор с параметром
+            editWindow.Title = "Редактировать транзакцию";
+
+            if (editWindow.ShowDialog() == true)
+            {
+                // Если пользователь нажал OK, обновляем данные
+                var updatedTransaction = editWindow.NewTransaction;
+
+                // Находим транзакцию в БД
+                var txInDb = _db.Transactions.FirstOrDefault(t => t.Id == transaction.Id);
+                if (txInDb != null)
+                {
+                    txInDb.Type = updatedTransaction.Type;
+                    txInDb.Name = updatedTransaction.Name;
+                    txInDb.CategoryId = updatedTransaction.CategoryId;
+                    txInDb.AccountId = updatedTransaction.AccountId;
+                    txInDb.Amount = updatedTransaction.Amount;
+                    txInDb.Note = updatedTransaction.Note;
+                    txInDb.Date = updatedTransaction.Date;
+
+                    _db.SaveChanges();
+                }
+
+                // Перезагружаем коллекцию
+                LoadTransactions();
+            }
         }
 
         [RelayCommand]
@@ -78,7 +112,7 @@ namespace MyFinance.ViewModels
             _db.Transactions.Remove(transaction);
             _db.SaveChanges();
             Transactions.Remove(transaction);
-            UpdateTotals();
+            LoadTransactions();
         }
 
         private void UpdateTotals()
@@ -86,6 +120,8 @@ namespace MyFinance.ViewModels
             TotalIncome = Transactions.Where(t => t.Type == "Income").Sum(t => t.Amount);
             TotalExpenses = Transactions.Where(t => t.Type == "Expense").Sum(t => t.Amount);
             TotalBalance = TotalIncome - TotalExpenses;
+
+            UpdatePieSeries();
         }
 
         private void UpdatePieSeries()
@@ -96,26 +132,19 @@ namespace MyFinance.ViewModels
         {
             Title = "Доходы",
             Values = new ChartValues<double> { (double)TotalIncome },
-            PushOut = 5,
+            PushOut = 0,
             Fill = new RadialGradientBrush(
                 Color.FromRgb(144,238,144), // светлый
                 Color.FromRgb(0,128,0))     // тёмный
             { GradientOrigin = new System.Windows.Point(0.3,0.3), Center = new System.Windows.Point(0.5,0.5), RadiusX=0.7, RadiusY=0.7 },
             Stroke = Brushes.DarkGreen,
-            StrokeThickness = 1,
-            Effect = new System.Windows.Media.Effects.DropShadowEffect
-            {
-                Color = Colors.Gray,
-                BlurRadius = 8,
-                Direction = 320,
-                ShadowDepth = 3
-            }
+            StrokeThickness = 1
         },
         new PieSeries
         {
             Title = "Расходы",
             Values = new ChartValues<double> { (double)TotalExpenses },
-            PushOut = 5,
+            PushOut = 0,
             Fill = new RadialGradientBrush(
                 Color.FromRgb(255,160,122),
                 Color.FromRgb(178,34,34))
