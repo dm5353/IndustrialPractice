@@ -55,8 +55,8 @@
         <!-- Дата -->
         <TextBlock Text="Дата и время:" Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" Margin="0,5"/>
         <StackPanel Orientation="Horizontal" Grid.Row="4" Grid.Column="1" Margin="0,5">
-            <DatePicker x:Name="DatePicker" Width="129" SelectedDate="{Binding Date}" />
-            <TextBox x:Name="TimeTextBox" Text="00:00" VerticalContentAlignment="Bottom" TextAlignment="Center" Width="125" />
+            <DatePicker x:Name="DatePicker" Width="129"/>
+            <TextBox x:Name="TimeTextBox" TextAlignment="Center" Width="125" VerticalContentAlignment="Center" />
         </StackPanel>
 
         <!-- Сумма -->

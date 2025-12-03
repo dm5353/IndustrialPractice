@@ -115,6 +115,18 @@ namespace MyFinance.ViewModels
             LoadTransactions();
         }
 
+        [RelayCommand]
+        private void OpenCategory()
+        {
+            LoadTransactions();
+        }
+
+        [RelayCommand]
+        private void OpenAccount()
+        {
+            LoadTransactions();
+        }
+
         private void UpdateTotals()
         {
             TotalIncome = Transactions.Where(t => t.Type == "Income").Sum(t => t.Amount);

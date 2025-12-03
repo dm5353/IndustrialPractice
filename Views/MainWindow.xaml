@@ -5,7 +5,7 @@
         xmlns:local="clr-namespace:MyFinance.Converters"
         xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
         xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
-        Title="Мои финансы" Height="700" Width="715" MinWidth="715" MaxWidth="715" MinHeight="500">
+        Title="Мои финансы" Height="700" Width="730" MinWidth="730" MaxWidth="730" MinHeight="500">
 
     <Window.Resources>
         <local:DateLabelConverter x:Key="DateLabelConverter"/>
@@ -33,11 +33,8 @@
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <!-- Верхняя панель -->
             <RowDefinition Height="Auto"/>
-            <!-- Заголовок Истории -->
             <RowDefinition Height="*"/>
-            <!-- Список операций -->
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0" Margin="0,0,0,10">
@@ -89,9 +86,18 @@
             </StackPanel>
 
             <!-- Правая панель: круговая диаграмма -->
-            <Border Grid.Column="1" CornerRadius="5" Padding="0" Margin="0,0,0,0">
-                <lvc:PieChart Series="{Binding PieSeries}" LegendLocation="None" Margin="0,0,10,54" />
-            </Border>
+            <StackPanel Grid.Column="1" HorizontalAlignment="Stretch">
+                <lvc:PieChart Series="{Binding PieSeries}" LegendLocation="None" Margin="0,0,0,20" Height="206" />
+                <!-- Кнопки -->
+                <Grid Margin="5,0,5,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Content="Категории" Margin="5" Command="{Binding OpenCategoryCommand}" HorizontalAlignment="Stretch"/>
+                    <Button Grid.Column="1" Content="Счета" Margin="5" Command="{Binding OpenAccountCommand}" HorizontalAlignment="Stretch"/>
+                </Grid>
+            </StackPanel>
         </Grid>
             
         <!-- История операций -->

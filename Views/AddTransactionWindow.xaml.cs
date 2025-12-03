@@ -17,7 +17,6 @@ namespace MyFinance.Views
             InitializeComponent();
 
             _db = new AppDbContext();
-            DatePicker.SelectedDate = transaction.Date.Date;
 
             // Заполняем ComboBox
             CategoryComboBox.ItemsSource = _db.Categories.ToList();
@@ -33,18 +32,14 @@ namespace MyFinance.Views
             AmountTextBox.Text = transaction.Amount.ToString();
             NoteTextBox.Text = transaction.Note;
 
-            // Тип
             TypeComboBox.SelectedItem = transaction.Type == "Income" ?
                 TypeComboBox.Items.OfType<ComboBoxItem>().FirstOrDefault(i => (string)i.Content == "Доход") :
                 TypeComboBox.Items.OfType<ComboBoxItem>().FirstOrDefault(i => (string)i.Content == "Расход");
 
-            // Категория
             CategoryComboBox.SelectedValue = transaction.CategoryId;
-
-            // Счёт
             AccountComboBox.SelectedValue = transaction.AccountId;
 
-            // Время (если есть TextBox для времени)
+            DatePicker.Text = transaction.Date.ToString("dd.MM.yyyy");
             TimeTextBox.Text = transaction.Date.ToString("HH:mm");
         }
 
@@ -53,8 +48,8 @@ namespace MyFinance.Views
             InitializeComponent();
 
             _db = new AppDbContext();
-            DatePicker.SelectedDate = DateTime.Now;
-            TimeTextBox.Text = "00:00";
+            DatePicker.SelectedDate = DateTime.Now.Date;
+            TimeTextBox.Text = DateTime.Now.ToString("HH:mm");
 
             if (!_db.Accounts.Any())
             {
