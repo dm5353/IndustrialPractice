@@ -61,8 +61,9 @@ namespace MyFinance.Views
             {
                 // Доходы
                 _db.Categories.Add(new Category { Name = "Зарплата", Type = "Income" });
-                _db.Categories.Add(new Category { Name = "Подарки", Type = "Income" });
-                _db.Categories.Add(new Category { Name = "Проценты по вкладам", Type = "Income" });
+                _db.Categories.Add(new Category { Name = "Подарок", Type = "Income" });
+                _db.Categories.Add(new Category { Name = "Проценты по вкладу", Type = "Income" });
+                _db.Categories.Add(new Category { Name = "Кешбек", Type = "Income" });
 
                 // Расходы
                 _db.Categories.Add(new Category { Name = "Еда", Type = "Expense" });
@@ -168,6 +169,24 @@ namespace MyFinance.Views
                 Amount = amount,
                 Note = NoteTextBox.Text
             };
+
+            // обновление баланса
+            var account = _db.Accounts.FirstOrDefault(a => a.Id == NewTransaction.AccountId);
+            if (account != null)
+            {
+                if (NewTransaction.Type == "Expense" && account.Balance < NewTransaction.Amount)
+                {
+                    MessageBox.Show("Недостаточно средств на счёте", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                if (NewTransaction.Type == "Income")
+                    account.Balance += NewTransaction.Amount;
+                else
+                    account.Balance -= NewTransaction.Amount;
+
+                _db.SaveChanges();
+            }
 
             DialogResult = true;
         }

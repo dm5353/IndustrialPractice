@@ -12,6 +12,7 @@
         <local:DateOnlyConverter x:Key="DateOnlyConverter"/>
         <local:NullToBoolConverter x:Key="NullToBoolConverter"/>
         <local:AmountWithSpaceConverter x:Key="AmountWithSpaceConverter"/>
+        <local:FutureOpacityConverter x:Key="FutureOpacityConverter"/>
 
         <CollectionViewSource x:Key="GroupedTransactions" Source="{Binding Transactions}">
             <!-- Группировка по дате без времени -->
@@ -31,7 +32,9 @@
     </Window.DataContext>
 
     <Grid Margin="10">
-        <Grid.RowDefinitions>
+        <!-- Основной контент -->
+        <Grid x:Name="MainContent">
+            <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -46,7 +49,8 @@
             <!-- Левая панель: Баланс + Доходы/Расходы + Кнопки -->
             <StackPanel Grid.Column="0" HorizontalAlignment="Left">
                 <!-- Баланс -->
-                <Border Background="#FFEEEEEE" Padding="20" CornerRadius="5" Margin="10,0,10,10">
+                <Border Background="#FFEEEEEE" Padding="20" CornerRadius="5" Margin="10,0,10,10" Cursor="Hand"
+                        MouseLeftButtonUp="Balance_Click">
                     <StackPanel>
                         <TextBlock Text="Баланс" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center"/>
                         <TextBlock Text="{Binding TotalBalance, Converter={StaticResource AmountWithSpaceConverter}}" FontSize="24" FontWeight="Bold" Foreground="Black" HorizontalAlignment="Center"/>
@@ -55,17 +59,29 @@
 
                 <!-- Доходы/Расходы -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
-                    <Border Background="#FFEEEEEE" Padding="20" Margin="10" CornerRadius="5" Width="200">
+                        <Border Background="#FFEEEEEE" Padding="20" Margin="10" CornerRadius="5" Width="200" Cursor="Hand"
+                        MouseLeftButtonUp="Expenses_Click">
                         <StackPanel>
-                            <TextBlock Text="Расходы" FontSize="18" FontWeight="Bold"/>
-                            <TextBlock Text="{Binding TotalExpenses, Converter={StaticResource AmountWithSpaceConverter}}" FontSize="20" Foreground="Red"/>
+                            <TextBlock FontSize="12" FontWeight="Normal" Foreground="Gray">
+                                <Run Text="Расходы" FontSize="18" FontWeight="Bold" Foreground="Black"/>
+                                <Run Text=" ("/>
+                                <Run Text="{Binding CurrentMonthName, Mode=OneWay}"/>
+                                <Run Text=")"/>
+                            </TextBlock>
+                            <TextBlock Text="{Binding TotalExpensesCurrentMonth, Converter={StaticResource AmountWithSpaceConverter}}" FontSize="20" Foreground="Red"/>
                         </StackPanel>
                     </Border>
 
-                    <Border Background="#FFEEEEEE" Padding="20" Margin="10" CornerRadius="5" Width="200">
+                        <Border Background="#FFEEEEEE" Padding="20" Margin="10" CornerRadius="5" Width="200" Cursor="Hand"
+                        MouseLeftButtonUp="Income_Click">
                         <StackPanel>
-                            <TextBlock Text="Доходы" FontSize="18" FontWeight="Bold"/>
-                            <TextBlock Text="{Binding TotalIncome, Converter={StaticResource AmountWithSpaceConverter}}" FontSize="20" Foreground="Green"/>
+                            <TextBlock FontSize="12" FontWeight="Normal" Foreground="Gray">
+                                <Run Text="Доходы" FontSize="18" FontWeight="Bold" Foreground="Black"/>
+                                <Run Text=" ("/>
+                                <Run Text="{Binding CurrentMonthName, Mode=OneWay}"/>
+                                <Run Text=")"/>
+                            </TextBlock>
+                            <TextBlock Text="{Binding TotalIncomeCurrentMonth, Converter={StaticResource AmountWithSpaceConverter}}" FontSize="20" Foreground="Green"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -99,7 +115,7 @@
                 </Grid>
             </StackPanel>
         </Grid>
-            
+
         <!-- История операций -->
         <TextBlock Grid.Row="1"
            Text="История операций:"
@@ -116,8 +132,9 @@
                         <GroupStyle.HeaderTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding Name, Converter={StaticResource DateLabelConverter}}"
-                       FontWeight="Bold"
-                       Margin="10 10 0 5"/>
+                                           FontWeight="Bold"
+                                           Margin="10 10 0 5"
+                                           Opacity="{Binding Name, Converter={StaticResource FutureOpacityConverter}}"/>
                             </DataTemplate>
                         </GroupStyle.HeaderTemplate>
                     </GroupStyle>
@@ -127,8 +144,9 @@
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <Border Background="#FFF5F5F5" CornerRadius="5"
-        Padding="10" Margin="0,0,0,0"
-        BorderBrush="#FFCCCCCC" BorderThickness="1">
+                                Padding="10" Margin="0,0,0,0"
+                                BorderBrush="#FFCCCCCC" BorderThickness="1"
+                                Opacity="{Binding Date, Converter={StaticResource FutureOpacityConverter}}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="150"/>
@@ -190,7 +208,24 @@
 
             </ListBox>
         </ScrollViewer>
+        </Grid>
 
+        <!-- Детальная страница баланса -->
+        <Grid x:Name="BalanceDetail" Visibility="Collapsed">
+            <TextBlock Text="Детальная информация по балансу" FontSize="24"/>
+            <Button Content="Назад" Click="BackButton_Click"/>
+        </Grid>
 
+        <!-- Детальная страница расхода -->
+        <Grid x:Name="ExpensesDetail" Visibility="Collapsed">
+            <TextBlock Text="Детальная информация по расходам" FontSize="24"/>
+            <Button Content="Назад" Click="BackButton_Click"/>
+        </Grid>
+
+        <!-- Детальная страница дохода -->
+        <Grid x:Name="IncomeDetail" Visibility="Collapsed">
+            <TextBlock Text="Детальная информация по доходам" FontSize="24"/>
+            <Button Content="Назад" Click="BackButton_Click"/>
+        </Grid>
     </Grid>
 </Window>

@@ -7,6 +7,8 @@ using MyFinance.Models;
 using MyFinance.Services;
 using MyFinance.Views;
 using System.Collections.ObjectModel;
+using System.Globalization;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 
@@ -109,8 +111,20 @@ namespace MyFinance.ViewModels
         private void DeleteTransaction(Transaction transaction)
         {
             if (transaction == null) return;
+
+            // Найти счёт
+            var account = _db.Accounts.FirstOrDefault(a => a.Id == transaction.AccountId);
+            if (account != null)
+            {
+                if (transaction.Type == "Income")
+                    account.Balance -= transaction.Amount; // уменьшаем доход
+                else
+                    account.Balance += transaction.Amount; // возвращаем расход
+            }
+
             _db.Transactions.Remove(transaction);
             _db.SaveChanges();
+
             Transactions.Remove(transaction);
             LoadTransactions();
         }
@@ -143,7 +157,7 @@ namespace MyFinance.ViewModels
         new PieSeries
         {
             Title = "Доходы",
-            Values = new ChartValues<double> { (double)TotalIncome },
+            Values = new ChartValues<double> { (double)TotalIncomeCurrentMonth },
             PushOut = 0,
             Fill = new RadialGradientBrush(
                 Color.FromRgb(144,238,144), // светлый
@@ -155,7 +169,7 @@ namespace MyFinance.ViewModels
         new PieSeries
         {
             Title = "Расходы",
-            Values = new ChartValues<double> { (double)TotalExpenses },
+            Values = new ChartValues<double> { (double)TotalExpensesCurrentMonth },
             PushOut = 0,
             Fill = new RadialGradientBrush(
                 Color.FromRgb(255,160,122),
@@ -174,5 +188,16 @@ namespace MyFinance.ViewModels
     };
             OnPropertyChanged(nameof(PieSeries));
         }
+
+        public decimal TotalIncomeCurrentMonth =>
+    Transactions
+        .Where(t => t.Type == "Income" && t.Date.Month == DateTime.Now.Month && t.Date.Year == DateTime.Now.Year)
+        .Sum(t => t.Amount);
+
+        public decimal TotalExpensesCurrentMonth =>
+            Transactions
+                .Where(t => t.Type == "Expense" && t.Date.Month == DateTime.Now.Month && t.Date.Year == DateTime.Now.Year)
+                .Sum(t => t.Amount);
+        public string CurrentMonthName => DateTime.Now.ToString("MMMM", new CultureInfo("ru-RU"));
     }
 }
