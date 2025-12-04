@@ -13,9 +13,9 @@ namespace MyFinance.Converters
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is decimal dec)
-                return string.Format(new CultureInfo("ru-RU"), "{0:N0} ₽", dec);
+                return string.Format(new CultureInfo("ru-RU"), "{0:N2} ₽", dec);
             if (value is double dbl)
-                return string.Format(new CultureInfo("ru-RU"), "{0:N0} ₽", dbl);
+                return string.Format(new CultureInfo("ru-RU"), "{0:N2} ₽", dbl);
             return value;
         }
 

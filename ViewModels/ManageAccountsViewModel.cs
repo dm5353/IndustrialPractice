@@ -47,6 +47,9 @@ namespace MyFinance.ViewModels
             _db.SaveChanges();
 
             Accounts.Remove(SelectedAccount);
+
+            // Обновляем главную страницу
+            (App.Current.MainWindow.DataContext as MainViewModel)?.LoadTransactions();
         }
     }
 }

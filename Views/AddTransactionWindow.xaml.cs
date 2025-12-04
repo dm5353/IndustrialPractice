@@ -35,7 +35,7 @@ namespace MyFinance.Views
             AccountComboBox.SelectedValue = transaction.AccountId;
 
             DatePicker.Text = transaction.Date.ToString("dd.MM.yyyy");
-            TimeTextBox.Text = transaction.Date.ToString("HH:mm");
+            TimeTextBox.Text = transaction.Date.ToString("HH:mm:ss");
         }
 
         public AddTransactionWindow()
@@ -44,7 +44,7 @@ namespace MyFinance.Views
 
             _db = new AppDbContext();
             DatePicker.SelectedDate = DateTime.Now.Date;
-            TimeTextBox.Text = DateTime.Now.ToString("HH:mm");
+            TimeTextBox.Text = DateTime.Now.ToString("HH:mm:ss");
 
             // Заполняем ComboBox категории и счета из БД
             CategoryComboBox.ItemsSource = _db.Categories.ToList();
@@ -117,14 +117,15 @@ namespace MyFinance.Views
 
             var date = DatePicker.SelectedDate ?? DateTime.Now;
 
-            int hours = 0, minutes = 0;
+            int hours = 0, minutes = 0, seconds = 0;
             if (!string.IsNullOrEmpty(TimeTextBox.Text))
             {
                 var timeParts = TimeTextBox.Text.Split(':');
-                if (timeParts.Length == 2)
+                if (timeParts.Length == 3)
                 {
                     int.TryParse(timeParts[0], out hours);
                     int.TryParse(timeParts[1], out minutes);
+                    int.TryParse(timeParts[2], out seconds);
                 }
             }
 
@@ -134,27 +135,16 @@ namespace MyFinance.Views
                 Name = string.IsNullOrWhiteSpace(NameTextBox.Text) ? "Операция" : NameTextBox.Text,
                 CategoryId = CategoryComboBox.SelectedValue != null ? (int)CategoryComboBox.SelectedValue : 0,
                 AccountId = AccountComboBox.SelectedValue != null ? (int)AccountComboBox.SelectedValue : 0,
-                Date = new DateTime(date.Year, date.Month, date.Day, hours, minutes, 0),
+                Date = new DateTime(date.Year, date.Month, date.Day, hours, minutes, seconds),
                 Amount = amount,
                 Note = NoteTextBox.Text
             };
 
-            // обновление баланса
             var account = _db.Accounts.FirstOrDefault(a => a.Id == NewTransaction.AccountId);
-            if (account != null)
+            if (((ComboBoxItem)TypeComboBox.SelectedItem).Content.ToString() == "Расход" && account.Balance < amount)
             {
-                if (NewTransaction.Type == "Expense" && account.Balance < NewTransaction.Amount)
-                {
-                    MessageBox.Show("Недостаточно средств на счёте", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
-                }
-
-                if (NewTransaction.Type == "Income")
-                    account.Balance += NewTransaction.Amount;
-                else
-                    account.Balance -= NewTransaction.Amount;
-
-                _db.SaveChanges();
+                MessageBox.Show("Недостаточно средств на счёте", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
             }
 
             DialogResult = true;

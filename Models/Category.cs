@@ -6,5 +6,6 @@
         public string Name { get; set; } = "";
         public string Type { get; set; } // Income или Expense
         public string Color { get; set; } = "#FFCCCCCC";
+        public ICollection<Transaction> Transactions { get; set; }
     }
 }

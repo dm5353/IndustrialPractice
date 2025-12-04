@@ -43,10 +43,33 @@ namespace MyFinance.ViewModels
         {
             if (SelectedCategory == null) return;
 
+            // Получаем все транзакции с этой категорией
+            var relatedTransactions = _db.Transactions
+                .Where(t => t.CategoryId == SelectedCategory.Id)
+                .ToList();
+
+            foreach (var tx in relatedTransactions)
+            {
+                // Корректируем баланс счёта
+                var account = _db.Accounts.FirstOrDefault(a => a.Id == tx.AccountId);
+                if (account != null)
+                {
+                    if (tx.Type == "Income")
+                        account.Balance -= tx.Amount;
+                    else
+                        account.Balance += tx.Amount;
+                }
+
+                _db.Transactions.Remove(tx);
+            }
+
             _db.Categories.Remove(SelectedCategory);
             _db.SaveChanges();
 
             Categories.Remove(SelectedCategory);
+
+            // Обновляем главную страницу
+            (App.Current.MainWindow.DataContext as MainViewModel)?.LoadTransactions();
         }
     }
 }

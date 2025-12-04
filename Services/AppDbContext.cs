@@ -48,5 +48,22 @@ namespace MyFinance.Services
             var dbPath = Path.Combine(folder, "finance.db");
             optionsBuilder.UseSqlite($"Data Source={dbPath}");
         }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Transaction>()
+    .HasOne(t => t.Account)
+    .WithMany(a => a.Transactions)
+    .HasForeignKey(t => t.AccountId)
+    .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Transaction>()
+    .HasOne(t => t.Category)
+    .WithMany(c => c.Transactions)
+    .HasForeignKey(t => t.CategoryId)
+    .OnDelete(DeleteBehavior.Cascade);
+        }
     }
 }

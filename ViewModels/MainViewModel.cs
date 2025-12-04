@@ -8,6 +8,7 @@ using MyFinance.Services;
 using MyFinance.Views;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
@@ -41,7 +42,7 @@ namespace MyFinance.ViewModels
             LoadTransactions();
         }
 
-        private void LoadTransactions()
+        public void LoadTransactions()
         {
             Transactions.Clear();
 
@@ -66,8 +67,15 @@ namespace MyFinance.ViewModels
             {
                 var tx = window.NewTransaction;
                 _db.Transactions.Add(tx);
+
+                // обновление баланса
+                var account = _db.Accounts.FirstOrDefault(a => a.Id == tx.AccountId);
+                if (tx.Type == "Income")
+                    account.Balance += tx.Amount;
+                else
+                    account.Balance -= tx.Amount;
+
                 _db.SaveChanges();
-                Transactions.Insert(0, tx); // вставляем сверху
                 LoadTransactions();
             }
         }
@@ -87,6 +95,13 @@ namespace MyFinance.ViewModels
                 // Если пользователь нажал OK, обновляем данные
                 var updatedTransaction = editWindow.NewTransaction;
 
+                // обновление баланса
+                var account = _db.Accounts.FirstOrDefault(a => a.Id == transaction.AccountId);
+                if (transaction.Type == "Income")
+                    account.Balance -= transaction.Amount;
+                else
+                    account.Balance += transaction.Amount;
+
                 // Находим транзакцию в БД
                 var txInDb = _db.Transactions.FirstOrDefault(t => t.Id == transaction.Id);
                 if (txInDb != null)
@@ -98,11 +113,15 @@ namespace MyFinance.ViewModels
                     txInDb.Amount = updatedTransaction.Amount;
                     txInDb.Note = updatedTransaction.Note;
                     txInDb.Date = updatedTransaction.Date;
-
-                    _db.SaveChanges();
                 }
 
-                // Перезагружаем коллекцию
+                // обновление баланса
+                if (updatedTransaction.Type == "Income")
+                    account.Balance += updatedTransaction.Amount;
+                else
+                    account.Balance -= updatedTransaction.Amount;
+
+                _db.SaveChanges();
                 LoadTransactions();
             }
         }
@@ -118,18 +137,13 @@ namespace MyFinance.ViewModels
 
             // Найти счёт
             var account = _db.Accounts.FirstOrDefault(a => a.Id == trackedTransaction.AccountId);
-            if (account != null)
-            {
                 if (trackedTransaction.Type == "Income")
                     account.Balance -= trackedTransaction.Amount; // уменьшаем доход
                 else
                     account.Balance += trackedTransaction.Amount; // возвращаем расход
-            }
 
             _db.Transactions.Remove(trackedTransaction);
             _db.SaveChanges();
-
-            Transactions.Remove(transaction);
             LoadTransactions();
         }
 
@@ -153,7 +167,11 @@ namespace MyFinance.ViewModels
         {
             TotalIncome = Transactions.Where(t => t.Type == "Income").Sum(t => t.Amount);
             TotalExpenses = Transactions.Where(t => t.Type == "Expense").Sum(t => t.Amount);
-            TotalBalance = TotalIncome - TotalExpenses;
+
+            TotalBalance = _db.Accounts.Sum(a => a.Balance);
+
+            OnPropertyChanged(nameof(TotalIncomeCurrentMonth));
+            OnPropertyChanged(nameof(TotalExpensesCurrentMonth));
 
             UpdatePieSeries();
         }

@@ -25,7 +25,7 @@ namespace MyFinance.Views
             NewAccount = new Account
             {
                 Name = NameBox.Text.Trim(),
-                Balance = int.Parse(BalanceBox.Text.Trim())
+                Balance = decimal.Parse(BalanceBox.Text.Trim())
             };
 
             DialogResult = true;
