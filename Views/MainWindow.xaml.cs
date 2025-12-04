@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using System.Windows.Controls;
 
 namespace MyFinance.Views
 {
@@ -12,15 +13,19 @@ namespace MyFinance.Views
             InitializeComponent();
         }
 
-        private void Balance_Click(object sender, RoutedEventArgs e) => BalanceDetail.Visibility = Visibility.Visible;
-        private void Expenses_Click(object sender, RoutedEventArgs e) => BalanceDetail.Visibility = Visibility.Visible;
-        private void Income_Click(object sender, RoutedEventArgs e) => BalanceDetail.Visibility = Visibility.Visible;
+        private void Balance_Click(object sender, RoutedEventArgs e) => ShowDetail(BalanceDetail);
+        private void Expenses_Click(object sender, RoutedEventArgs e) => ShowDetail(ExpensesDetail);
+        private void Income_Click(object sender, RoutedEventArgs e) => ShowDetail(IncomeDetail);
+        private void BackButton_Click(object sender, RoutedEventArgs e) => ShowDetail(MainContent);
 
-        private void BackButton_Click(object sender, RoutedEventArgs e)
+        private void ShowDetail(Grid detailGrid)
         {
+            MainContent.Visibility = Visibility.Collapsed;
             BalanceDetail.Visibility = Visibility.Collapsed;
             ExpensesDetail.Visibility = Visibility.Collapsed;
             IncomeDetail.Visibility = Visibility.Collapsed;
+
+            detailGrid.Visibility = Visibility.Visible;
         }
     }
 }

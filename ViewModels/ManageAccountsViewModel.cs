@@ -34,6 +34,7 @@ namespace MyFinance.ViewModels
                 _db.SaveChanges();
 
                 Accounts.Add(newAcc);
+                (App.Current.MainWindow.DataContext as MainViewModel)?.LoadTransactions();
             }
         }
 
@@ -47,8 +48,6 @@ namespace MyFinance.ViewModels
             _db.SaveChanges();
 
             Accounts.Remove(SelectedAccount);
-
-            // Обновляем главную страницу
             (App.Current.MainWindow.DataContext as MainViewModel)?.LoadTransactions();
         }
     }

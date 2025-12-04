@@ -10,6 +10,7 @@ namespace MyFinance.Services
         public DbSet<Account> Accounts { get; set; }
         public DbSet<Category> Categories { get; set; }
 
+        // При первом запуске закомментить!!! 
         public AppDbContext()
         {
             if (!Accounts.Any()) // добавляем только если нет записей
