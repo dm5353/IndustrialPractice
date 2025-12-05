@@ -34,270 +34,288 @@
 
     <Grid Margin="10">
         <!-- Основной контент -->
-        <Grid x:Name="MainContent" Visibility="Collapsed">
+        <Grid x:Name="MainContent" Visibility="Visible">
             <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="0,0,0,10">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="450"/>
-                <ColumnDefinition Width="250"/>
-            </Grid.ColumnDefinitions>
+            <Grid Grid.Row="0" Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="450"/>
+                    <ColumnDefinition Width="250"/>
+                </Grid.ColumnDefinitions>
 
-            <!-- Левая панель: Баланс + Доходы/Расходы + Кнопки -->
-            <StackPanel Grid.Column="0" HorizontalAlignment="Left">
-                <!-- Баланс -->
-                <Border Background="#FFEEEEEE" Padding="20" CornerRadius="5" Margin="10,0,10,10" Cursor="Hand"
+                <!-- Левая панель: Баланс + Доходы/Расходы + Кнопки -->
+                <StackPanel Grid.Column="0" HorizontalAlignment="Left">
+                    <!-- Баланс -->
+                    <Border Background="#FFEEEEEE" Padding="20" CornerRadius="5" Margin="10,0,10,10" Cursor="Hand"
                         MouseLeftButtonUp="Balance_Click">
-                    <StackPanel>
-                        <TextBlock Text="Баланс" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center"/>
-                        <TextBlock Text="{Binding TotalBalance, Converter={StaticResource AmountWithSpaceConverter}}" FontSize="24" FontWeight="Bold" Foreground="Black" HorizontalAlignment="Center"/>
-                    </StackPanel>
-                </Border>
+                        <StackPanel>
+                            <TextBlock Text="Баланс" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding TotalBalance, Converter={StaticResource AmountWithSpaceConverter}}" FontSize="24" FontWeight="Bold" Foreground="Black" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
 
-                <!-- Доходы/Расходы -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
+                    <!-- Доходы/Расходы -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
                         <Border Background="#FFEEEEEE" Padding="20" Margin="10" CornerRadius="5" Width="200" Cursor="Hand"
                         MouseLeftButtonUp="Expenses_Click">
-                        <StackPanel>
-                            <TextBlock FontSize="12" FontWeight="Normal" Foreground="Gray">
+                            <StackPanel>
+                                <TextBlock FontSize="12" FontWeight="Normal" Foreground="Gray">
                                 <Run Text="Расходы" FontSize="18" FontWeight="Bold" Foreground="Black"/>
                                 <Run Text=" ("/>
                                 <Run Text="{Binding CurrentMonthName, Mode=OneWay}"/>
                                 <Run Text=")"/>
-                            </TextBlock>
-                            <TextBlock Text="{Binding TotalExpensesCurrentMonth, Converter={StaticResource AmountWithSpaceConverter}}" FontSize="20" Foreground="Red"/>
-                        </StackPanel>
-                    </Border>
+                                </TextBlock>
+                                <TextBlock Text="{Binding TotalExpensesCurrentMonth, Converter={StaticResource AmountWithSpaceConverter}}" FontSize="20" Foreground="Red"/>
+                            </StackPanel>
+                        </Border>
 
                         <Border Background="#FFEEEEEE" Padding="20" Margin="10" CornerRadius="5" Width="200" Cursor="Hand"
                         MouseLeftButtonUp="Income_Click">
-                        <StackPanel>
-                            <TextBlock FontSize="12" FontWeight="Normal" Foreground="Gray">
+                            <StackPanel>
+                                <TextBlock FontSize="12" FontWeight="Normal" Foreground="Gray">
                                 <Run Text="Доходы" FontSize="18" FontWeight="Bold" Foreground="Black"/>
                                 <Run Text=" ("/>
                                 <Run Text="{Binding CurrentMonthName, Mode=OneWay}"/>
                                 <Run Text=")"/>
-                            </TextBlock>
-                            <TextBlock Text="{Binding TotalIncomeCurrentMonth, Converter={StaticResource AmountWithSpaceConverter}}" FontSize="20" Foreground="Green"/>
-                        </StackPanel>
-                    </Border>
+                                </TextBlock>
+                                <TextBlock Text="{Binding TotalIncomeCurrentMonth, Converter={StaticResource AmountWithSpaceConverter}}" FontSize="20" Foreground="Green"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Кнопки CRUD -->
+                    <Grid Margin="5,0,5,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="Добавить" Margin="5" Command="{Binding AddTransactionCommand}" HorizontalAlignment="Stretch"/>
+                        <Button Grid.Column="1" Content="Изменить" Margin="5" Command="{Binding EditTransactionCommand}" CommandParameter="{Binding SelectedTransaction}" 
+                        IsEnabled="{Binding SelectedTransaction, Converter={StaticResource NullToBoolConverter}}" HorizontalAlignment="Stretch"/>
+                        <Button Grid.Column="2" Content="Удалить" Margin="5" Command="{Binding DeleteTransactionCommand}" CommandParameter="{Binding SelectedTransaction}" 
+                        IsEnabled="{Binding SelectedTransaction, Converter={StaticResource NullToBoolConverter}}" HorizontalAlignment="Stretch"/>
+                    </Grid>
                 </StackPanel>
 
-                <!-- Кнопки CRUD -->
-                <Grid Margin="5,0,5,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Button Grid.Column="0" Content="Добавить" Margin="5" Command="{Binding AddTransactionCommand}" HorizontalAlignment="Stretch"/>
-                    <Button Grid.Column="1" Content="Изменить" Margin="5" Command="{Binding EditTransactionCommand}" CommandParameter="{Binding SelectedTransaction}" 
-                        IsEnabled="{Binding SelectedTransaction, Converter={StaticResource NullToBoolConverter}}" HorizontalAlignment="Stretch"/>
-                    <Button Grid.Column="2" Content="Удалить" Margin="5" Command="{Binding DeleteTransactionCommand}" CommandParameter="{Binding SelectedTransaction}" 
-                        IsEnabled="{Binding SelectedTransaction, Converter={StaticResource NullToBoolConverter}}" HorizontalAlignment="Stretch"/>
-                </Grid>
-            </StackPanel>
+                <!-- Правая панель: круговая диаграмма -->
+                <StackPanel Grid.Column="1" HorizontalAlignment="Stretch">
+                    <lvc:PieChart Series="{Binding PieSeries}" LegendLocation="None" Margin="0,0,0,20" Height="206" />
+                    <!-- Кнопки -->
+                    <Grid Margin="5,0,5,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="Категории" Margin="5" Command="{Binding OpenCategoryCommand}" HorizontalAlignment="Stretch"/>
+                        <Button Grid.Column="1" Content="Счета" Margin="5" Command="{Binding OpenAccountCommand}" HorizontalAlignment="Stretch"/>
+                    </Grid>
+                </StackPanel>
+            </Grid>
 
-            <!-- Правая панель: круговая диаграмма -->
-            <StackPanel Grid.Column="1" HorizontalAlignment="Stretch">
-                <lvc:PieChart Series="{Binding PieSeries}" LegendLocation="None" Margin="0,0,0,20" Height="206" />
-                <!-- Кнопки -->
-                <Grid Margin="5,0,5,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Button Grid.Column="0" Content="Категории" Margin="5" Command="{Binding OpenCategoryCommand}" HorizontalAlignment="Stretch"/>
-                    <Button Grid.Column="1" Content="Счета" Margin="5" Command="{Binding OpenAccountCommand}" HorizontalAlignment="Stretch"/>
-                </Grid>
-            </StackPanel>
-        </Grid>
-
-        <!-- История операций -->
-        <TextBlock Grid.Row="1"
+            <!-- История операций -->
+            <TextBlock Grid.Row="1"
            Text="История операций:"
            FontSize="18"
            FontWeight="Bold"
            Margin="10,0,0,0"/>
-        <ScrollViewer HorizontalAlignment="Left" Grid.Row="2" VerticalScrollBarVisibility="Auto" Width="670" CanContentScroll="True">
-            <ListBox  HorizontalAlignment="Left" Width="640" ItemsSource="{Binding Source={StaticResource GroupedTransactions}}" 
+            <ScrollViewer HorizontalAlignment="Left" Grid.Row="2" VerticalScrollBarVisibility="Auto" Width="670">
+                <ListBox HorizontalAlignment="Left" Width="670" ItemsSource="{Binding Source={StaticResource GroupedTransactions}}" 
              SelectedItem="{Binding SelectedTransaction}" BorderThickness="0">
 
-                <!-- Шаблон группы (заголовок с датой) -->
-                <ListBox.GroupStyle>
-                    <GroupStyle>
-                        <GroupStyle.HeaderTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Name, Converter={StaticResource DateLabelConverter}}"
+                    <!-- Шаблон группы (заголовок с датой) -->
+                    <ListBox.GroupStyle>
+                        <GroupStyle>
+                            <GroupStyle.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name, Converter={StaticResource DateLabelConverter}}"
                                            FontWeight="Bold"
                                            Margin="10 10 0 5"
                                            Opacity="{Binding Name, Converter={StaticResource FutureOpacityConverter}}"/>
-                            </DataTemplate>
-                        </GroupStyle.HeaderTemplate>
-                    </GroupStyle>
-                </ListBox.GroupStyle>
+                                </DataTemplate>
+                            </GroupStyle.HeaderTemplate>
+                        </GroupStyle>
+                    </ListBox.GroupStyle>
 
-                <!-- Шаблон одной операции -->
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <Border Background="#FFF5F5F5" CornerRadius="5"
+                    <!-- Шаблон одной операции -->
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="#FFF5F5F5" CornerRadius="5"
                                 Padding="10" Margin="0,0,0,0"
                                 BorderBrush="#FFCCCCCC" BorderThickness="1"
                                 Opacity="{Binding Date, Converter={StaticResource FutureOpacityConverter}}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="150"/>
-                                    <ColumnDefinition Width="100"/>
-                                    <ColumnDefinition Width="150"/>
-                                    <ColumnDefinition Width="200"/>
-                                </Grid.ColumnDefinitions>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="200"/>
+                                    </Grid.ColumnDefinitions>
 
-                                <!-- Название и категория -->
-                                <StackPanel Grid.Column="0" Orientation="Vertical">
-                                    <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
+                                    <!-- Название и категория -->
+                                    <StackPanel Grid.Column="0" Orientation="Vertical">
+                                        <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
                                         <TextBlock Text="{Binding Category.Name}" FontStyle="Italic" FontSize="12" Foreground="{Binding Category.Color, Converter={StaticResource StringToBrushConverter}}"/>
-                                </StackPanel>
+                                    </StackPanel>
 
-                                <!-- СУММА -->
-                                <TextBlock Grid.Column="1" VerticalAlignment="Center"  HorizontalAlignment="Right" Margin="0,0,5,0">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Foreground" Value="Black"/>
-                                            <Setter Property="Text" Value="{Binding Amount, Converter={StaticResource AmountWithSpaceConverter}}"/>
-                                            <Style.Triggers>
-                                                <!-- Доход -->
-                                                <DataTrigger Binding="{Binding Type}" Value="Income">
-                                                    <Setter Property="Foreground" Value="Green"/>
-                                                    <Setter Property="Text">
-                                                        <Setter.Value>
-                                                            <MultiBinding StringFormat="+ {0}">
-                                                                <Binding Path="Amount" Converter="{StaticResource AmountWithSpaceConverter}"/>
-                                                            </MultiBinding>
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                </DataTrigger>
+                                    <!-- СУММА -->
+                                    <TextBlock Grid.Column="1" VerticalAlignment="Center"  HorizontalAlignment="Right" Margin="0,0,5,0">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="Black"/>
+                                                <Setter Property="Text" Value="{Binding Amount, Converter={StaticResource AmountWithSpaceConverter}}"/>
+                                                <Style.Triggers>
+                                                    <!-- Доход -->
+                                                    <DataTrigger Binding="{Binding Type}" Value="Income">
+                                                        <Setter Property="Foreground" Value="Green"/>
+                                                        <Setter Property="Text">
+                                                            <Setter.Value>
+                                                                <MultiBinding StringFormat="+ {0}">
+                                                                    <Binding Path="Amount" Converter="{StaticResource AmountWithSpaceConverter}"/>
+                                                                </MultiBinding>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </DataTrigger>
 
-                                                <!-- Расход -->
-                                                <DataTrigger Binding="{Binding Type}" Value="Expense">
-                                                    <Setter Property="Foreground" Value="Red"/>
-                                                    <Setter Property="Text">
-                                                        <Setter.Value>
-                                                            <MultiBinding StringFormat="- {0}">
-                                                                <Binding Path="Amount" Converter="{StaticResource AmountWithSpaceConverter}"/>
-                                                            </MultiBinding>
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
+                                                    <!-- Расход -->
+                                                    <DataTrigger Binding="{Binding Type}" Value="Expense">
+                                                        <Setter Property="Foreground" Value="Red"/>
+                                                        <Setter Property="Text">
+                                                            <Setter.Value>
+                                                                <MultiBinding StringFormat="- {0}">
+                                                                    <Binding Path="Amount" Converter="{StaticResource AmountWithSpaceConverter}"/>
+                                                                </MultiBinding>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
 
-                                <!-- Имя счета -->
-                                <TextBlock Text="{Binding Account.Name}" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0"/>
-                                <!-- Примечание -->
-                                <TextBlock Text="{Binding Note}" Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Left"/>
-                            </Grid>
-                        </Border>
-
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-
-            </ListBox>
-        </ScrollViewer>
+                                    <!-- Имя счета -->
+                                    <TextBlock Text="{Binding Account.Name}" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0"/>
+                                    <!-- Примечание -->
+                                    <TextBlock Text="{Binding Note}" Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </ScrollViewer>
         </Grid>
 
         <!-- Детальная страница баланса -->
-        <Grid x:Name="BalanceDetail" Visibility="Visible">
+        <Grid x:Name="BalanceDetail" Visibility="Collapsed">
             <!-- Кнопка назад -->
             <Button Content="← Назад"
-            HorizontalAlignment="Left"
-            VerticalAlignment="Top"
-            Margin="10"
-            Padding="10,5"
-            Click="BackButton_Click"/>
-
-            <!-- Надпись рядом с кнопкой -->
+HorizontalAlignment="Left"
+VerticalAlignment="Top"
+Margin="10,0,0,0"
+Padding="10,5"
+Click="BackButton_Click"/>
             <TextBlock Text="Баланс (детальная информация)"
-               VerticalAlignment="Top"
-               HorizontalAlignment="Left"
-               Margin="100,15,0,0"
-               FontSize="16"
-               FontWeight="Bold"/>
+   VerticalAlignment="Top"
+   HorizontalAlignment="Left"
+   Margin="100,5,0,0"
+   FontSize="16"
+   FontWeight="Bold"/>
 
-            <StackPanel Margin="10,50,10,10">
-                <!-- График изменения общего баланса -->
-                <StackPanel Orientation="Horizontal" Margin="0,10,0,5" VerticalAlignment="Center">
-                    <TextBlock Text="Общий баланс:" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
-                    <ComboBox Width="120" Margin="400,0,0,0" 
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,30,0,0">
+                <Grid>
+                    <StackPanel Margin="10,0,10,10">
+                        <!-- График изменения общего баланса -->
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,5" VerticalAlignment="Center">
+                            <TextBlock Text="Общий баланс:" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
+                            <ComboBox Width="120" Margin="400,0,0,0" 
               ItemsSource="{Binding PeriodOptions}" 
               SelectedItem="{Binding SelectedPeriod, Mode=TwoWay}"/>
-                </StackPanel>
-                <lvc:CartesianChart Series="{Binding TotalBalanceSeries}" LegendLocation="None" Height="250">
-                    <lvc:CartesianChart.AxisX>
-                        <lvc:Axis Title="Период" Labels="{Binding TotalBalanceLabels}" />
-                    </lvc:CartesianChart.AxisX>
-                    <lvc:CartesianChart.AxisY>
-                        <lvc:Axis Title="Баланс" LabelFormatter="{Binding AmountFormatter}" />
-                    </lvc:CartesianChart.AxisY>
-                </lvc:CartesianChart>
-
-                <!-- Остальные графики -->
-                <Grid Margin="0,20,0,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-
-                    <TextBlock Grid.Column="0" Grid.Row="1" Margin="5,0,0,0" Text="Доходы/Расходы по счетам:" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
-                    <ComboBox Grid.Column="1" Grid.Row="1" Width="120" Margin="170,0,0,0" 
-ItemsSource="{Binding AccountOptions}" 
-SelectedItem="{Binding SelectedAccount, Mode=TwoWay}"/>
-                    <TextBlock Grid.Column="0" Grid.Row="2" Margin="5,5,0,0" Text="По категориям:" FontSize="15" VerticalAlignment="Center"/>
-                    <ComboBox Grid.Column="1" Grid.Row="2" Width="120" Margin="170,5,0,0" 
-ItemsSource="{Binding CategoryOptions}" 
-SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"/>
-
-                    <!-- Баланс по расходам/доходам -->
-                    <StackPanel Grid.Column="0" Grid.Row="3" Margin="5,0,5,0">
-                        <lvc:PieChart Series="{Binding IncomeExpenseSeries}" LegendLocation="Right" Height="200"/>
-                    </StackPanel>
-
-                    <!-- Баланс по счетам -->
-                    <!-- Круговая диаграмма -->
-                    <StackPanel Grid.Column="1" Grid.Row="0" Margin="5,0,5,0">
-                        <TextBlock Text="" FontSize="18" FontWeight="Bold" Margin="0,0,0,5"/>
-                        <lvc:PieChart Series="{Binding AccountBalancePieSeries}" LegendLocation="Right" Height="200"/>
-                    </StackPanel>
-                    <!-- Линейная диаграмма -->
-                    <StackPanel Grid.Column="0" Grid.Row="0" Margin="5,0,5,0">
-                        <TextBlock Text="Баланс по счетам:" FontSize="18" FontWeight="Bold" Margin="0,0,0,5"/>
-                        <lvc:CartesianChart Series="{Binding AccountBalanceLineSeries}" LegendLocation="None" Height="200">
+                        </StackPanel>
+                        <lvc:CartesianChart Series="{Binding TotalBalanceSeries}" LegendLocation="None" Height="250">
                             <lvc:CartesianChart.AxisX>
-                                <lvc:Axis Title="Дата" Labels="{Binding AccountLabels}" />
+                                <lvc:Axis Title="Период" Labels="{Binding TotalBalanceLabels}" />
                             </lvc:CartesianChart.AxisX>
                             <lvc:CartesianChart.AxisY>
                                 <lvc:Axis Title="Баланс" LabelFormatter="{Binding AmountFormatter}" />
                             </lvc:CartesianChart.AxisY>
                         </lvc:CartesianChart>
-                    </StackPanel>
 
-                    <!-- Баланс по  категориям-->
-                    <StackPanel Grid.Column="1" Grid.Row="3" Margin="5,0,5,0">
-                        <lvc:PieChart Series="{Binding CategorySeries}" LegendLocation="Right" Height="200"/>
+                        <!-- Остальные графики -->
+                        <Grid Margin="0,20,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" Grid.Row="1" Margin="5,0,0,0" Text="Доходы/Расходы по счетам:" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
+                            <ComboBox Grid.Column="1" Grid.Row="1" Width="120" Margin="170,0,0,0" ItemsSource="{Binding AccountOptions}" SelectedItem="{Binding SelectedAccount, Mode=TwoWay}"/>
+                            <TextBlock Grid.Column="0" Grid.Row="2" Margin="5,5,0,0" Text="По категориям:" FontSize="15" VerticalAlignment="Center"/>
+                            <ComboBox Grid.Column="1" Grid.Row="2" x:Name="CategoryComboBox"
+          Width="120"
+          Margin="170,5,0,0"
+          IsEditable="True"
+          IsTextSearchEnabled="False"
+          StaysOpenOnEdit="True"
+          Text="{Binding SelectedCategoriesText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+          SelectedItem="{Binding Dummy, Mode=TwoWay}"
+          ItemsSource="{Binding CategoryOptions}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Content="{Binding Name}"
+                      IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                      Padding="4"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+
+                                <ComboBox.Style>
+                                    <Style TargetType="ComboBox">
+                                        <Setter Property="IsDropDownOpen" Value="{Binding IsCategoryDropdownOpen, Mode=TwoWay}"/>
+                                    </Style>
+                                </ComboBox.Style>
+                            </ComboBox>
+
+                            <!-- Баланс по расходам/доходам -->
+                            <StackPanel Grid.Column="0" Grid.Row="3" Margin="5,0,5,0">
+                                <lvc:PieChart Series="{Binding IncomeExpenseSeries}" LegendLocation="Bottom" Height="250"/>
+                            </StackPanel>
+
+                            <!-- Баланс по счетам -->
+                            <!-- Круговая диаграмма -->
+                            <StackPanel Grid.Column="1" Grid.Row="0" Margin="5,0,5,0">
+                                <TextBlock Text="" FontSize="18" FontWeight="Bold" Margin="0,0,0,5"/>
+                                <lvc:PieChart Series="{Binding AccountBalancePieSeries}" LegendLocation="Top" Height="225"/>
+                            </StackPanel>
+                            <!-- Линейная диаграмма -->
+                            <StackPanel Grid.Column="0" Grid.Row="0" Margin="5,0,5,0">
+                                <TextBlock Text="Баланс по счетам:" FontSize="18" FontWeight="Bold" Margin="0,0,0,5"/>
+                                <lvc:CartesianChart Series="{Binding AccountBalanceLineSeries}" LegendLocation="Top" Height="250">
+                                    <lvc:CartesianChart.AxisX>
+                                        <lvc:Axis Title="Дата" Labels="{Binding AccountLabels}" />
+                                    </lvc:CartesianChart.AxisX>
+                                    <lvc:CartesianChart.AxisY>
+                                        <lvc:Axis Title="Баланс" LabelFormatter="{Binding AmountFormatter}" />
+                                    </lvc:CartesianChart.AxisY>
+                                </lvc:CartesianChart>
+                            </StackPanel>
+
+                            <!-- Баланс по  категориям-->
+                            <StackPanel Grid.Column="1" Grid.Row="3" Margin="5,0,5,0">
+                                <lvc:PieChart Series="{Binding CategorySeries}" LegendLocation="Bottom" Height="250"/>
+                            </StackPanel>
+                        </Grid>
                     </StackPanel>
                 </Grid>
-            </StackPanel>
+            </ScrollViewer>
         </Grid>
 
         <!-- Детальная страница расхода -->

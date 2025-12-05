@@ -16,30 +16,45 @@ namespace MyFinance.ViewModels
     {
         private readonly AppDbContext _db;
 
-        public SeriesCollection PieSeries { get; set; }
-        public ObservableCollection<Transaction> Transactions { get; set; } = new();
+        [ObservableProperty] private decimal _totalIncome;
+        [ObservableProperty] private decimal _totalExpenses;
+        [ObservableProperty] private decimal _totalBalance;
 
+        [ObservableProperty] private Transaction _selectedTransaction;
+
+        private string _selectedCategoriesText = "Категории";
+        [ObservableProperty] private string _selectedPeriod = "День";
+        [ObservableProperty] private string _selectedAccount = "Все";
+
+        public SeriesCollection PieSeries { get; set; }
+        public SeriesCollection TotalBalanceSeries { get; set; } = new();
+        public SeriesCollection IncomeExpenseSeries { get; set; } = new();
+        public SeriesCollection CategorySeries { get; set; } = new();
+        public SeriesCollection AccountBalancePieSeries { get; set; } = new();
+        public SeriesCollection AccountBalanceLineSeries { get; set; } = new();
+
+        public ObservableCollection<Transaction> Transactions { get; set; } = new();
+        public ObservableCollection<CategorySelectItem> CategoryOptions { get; set; } = new ObservableCollection<CategorySelectItem>();
+        public ObservableCollection<string> AccountOptions { get; set; } = new ();
+        public ObservableCollection<string> TotalBalanceLabels { get; set; } = new();
+        public ObservableCollection<string> AccountLabels { get; set; } = new();
         public ObservableCollection<string> PeriodOptions { get; set; } = new ObservableCollection<string>
         {
             "День", "Неделя", "Месяц", "Год"
         };
-        public ObservableCollection<string> AccountOptions { get; set; } = new ();
-        public ObservableCollection<string> CategoryOptions { get; set; } = new ObservableCollection<string>
+
+        public Func<double, string> AmountFormatter => val => val.ToString("N2");
+        public object Dummy { get; set; }
+        public bool IsCategoryDropdownOpen { get; set; }
+        public string SelectedCategoriesText
         {
-            "Все"
-        };
-
-        [ObservableProperty]
-        private decimal _totalIncome;
-
-        [ObservableProperty]
-        private decimal _totalExpenses;
-
-        [ObservableProperty]
-        private decimal _totalBalance;
-
-        [ObservableProperty]
-        private Transaction _selectedTransaction;
+            get => _selectedCategoriesText;
+            set
+            {
+                _selectedCategoriesText = value;
+                OnPropertyChanged(nameof(SelectedCategoriesText));
+            }
+        }
 
         public MainViewModel()
         {
@@ -47,6 +62,14 @@ namespace MyFinance.ViewModels
             _db.Database.EnsureCreated();
 
             LoadTransactions();
+            CategorySelectItem.CategoryChanged = OnCategorySelectionChanged;
+        }
+
+        private void OnCategorySelectionChanged()
+        {
+            UpdateSelectedCategoriesText();
+            UpdateIncomeExpenseSeries();
+            UpdateCategorySeries();
         }
 
         public void LoadTransactions()
@@ -69,117 +92,22 @@ namespace MyFinance.ViewModels
                 AccountOptions.Add(account.Name);
             }
 
+            CategoryOptions.Clear();
+            foreach (var category in _db.Categories.OrderBy(a => a.Name))
+            {
+                CategoryOptions.Add(new CategorySelectItem
+                {
+                    Name = category.Name,
+                    IsSelected = true
+                });
+            }
+
             UpdateTotals();
             UpdateTotalBalanceSeries();
             UpdateIncomeExpenseSeries();
             UpdateAccountBalanceLineSeries();
             UpdateCategorySeries();
             UpdateAccountBalancePieSeries();
-        }
-
-        [RelayCommand]
-        private void AddTransaction()
-        {
-            var window = new Views.AddTransactionWindow();
-            window.Owner = App.Current.MainWindow;
-            if (window.ShowDialog() == true)
-            {
-                var tx = window.NewTransaction;
-                _db.Transactions.Add(tx);
-
-                // обновление баланса
-                var account = _db.Accounts.FirstOrDefault(a => a.Id == tx.AccountId);
-                if (tx.Type == "Income")
-                    account.Balance += tx.Amount;
-                else
-                    account.Balance -= tx.Amount;
-
-                _db.SaveChanges();
-                LoadTransactions();
-            }
-        }
-
-
-        [RelayCommand]
-        private void EditTransaction(Transaction transaction)
-        {
-            if (transaction == null) return;
-
-            // Создаём окно и передаём существующую транзакцию
-            var editWindow = new AddTransactionWindow(transaction); // нужно добавить конструктор с параметром
-            editWindow.Title = "Редактировать транзакцию";
-
-            if (editWindow.ShowDialog() == true)
-            {
-                // Если пользователь нажал OK, обновляем данные
-                var updatedTransaction = editWindow.NewTransaction;
-
-                // обновление баланса
-                var account = _db.Accounts.FirstOrDefault(a => a.Id == transaction.AccountId);
-                if (transaction.Type == "Income")
-                    account.Balance -= transaction.Amount;
-                else
-                    account.Balance += transaction.Amount;
-
-                // Находим транзакцию в БД
-                var txInDb = _db.Transactions.FirstOrDefault(t => t.Id == transaction.Id);
-                if (txInDb != null)
-                {
-                    txInDb.Type = updatedTransaction.Type;
-                    txInDb.Name = updatedTransaction.Name;
-                    txInDb.CategoryId = updatedTransaction.CategoryId;
-                    txInDb.AccountId = updatedTransaction.AccountId;
-                    txInDb.Amount = updatedTransaction.Amount;
-                    txInDb.Note = updatedTransaction.Note;
-                    txInDb.Date = updatedTransaction.Date;
-                }
-
-                // обновление баланса
-                if (updatedTransaction.Type == "Income")
-                    account.Balance += updatedTransaction.Amount;
-                else
-                    account.Balance -= updatedTransaction.Amount;
-
-                _db.SaveChanges();
-                LoadTransactions();
-            }
-        }
-
-        [RelayCommand]
-        private void DeleteTransaction(Transaction transaction)
-        {
-            if (transaction == null) return;
-
-            // Найти сущность в контексте
-            var trackedTransaction = _db.Transactions.FirstOrDefault(t => t.Id == transaction.Id);
-            if (trackedTransaction == null) return; // уже удалена
-
-            // Найти счёт
-            var account = _db.Accounts.FirstOrDefault(a => a.Id == trackedTransaction.AccountId);
-                if (trackedTransaction.Type == "Income")
-                    account.Balance -= trackedTransaction.Amount; // уменьшаем доход
-                else
-                    account.Balance += trackedTransaction.Amount; // возвращаем расход
-
-            _db.Transactions.Remove(trackedTransaction);
-            _db.SaveChanges();
-            LoadTransactions();
-        }
-
-        [RelayCommand]
-        private void OpenCategory()
-        {
-            var window = new Views.ManageCategoriesWindow();
-            window.Owner = App.Current.MainWindow;
-            window.ShowDialog();
-        }
-
-        [RelayCommand]
-        private void OpenAccount()
-        {
-            var window = new Views.ManageAccountsWindow();
-            window.Owner = App.Current.MainWindow;
-            window.ShowDialog();
         }
 
         private void UpdateTotals()
@@ -232,48 +160,6 @@ namespace MyFinance.ViewModels
         }
     };
             OnPropertyChanged(nameof(PieSeries));
-        }
-
-        public decimal TotalIncomeCurrentMonth =>
-    Transactions
-        .Where(t => t.Type == "Income" && t.Date.Month == DateTime.Now.Month && t.Date.Year == DateTime.Now.Year)
-        .Sum(t => t.Amount);
-
-        public decimal TotalExpensesCurrentMonth =>
-            Transactions
-                .Where(t => t.Type == "Expense" && t.Date.Month == DateTime.Now.Month && t.Date.Year == DateTime.Now.Year)
-                .Sum(t => t.Amount);
-        public string CurrentMonthName => DateTime.Now.ToString("MMMM", new CultureInfo("ru-RU"));
-
-
-
-        [ObservableProperty]
-        private string _selectedPeriod = "День";
-
-        [ObservableProperty]
-        private string _selectedAccount = "Все";
-
-        public ObservableCollection<string> TotalBalanceLabels { get; set; } = new();
-
-        public SeriesCollection TotalBalanceSeries { get; set; } = new();
-        public SeriesCollection IncomeExpenseSeries { get; set; } = new();
-        public SeriesCollection CategorySeries { get; set; } = new();
-        public SeriesCollection AccountBalancePieSeries { get; set; } = new();
-        public SeriesCollection AccountBalanceLineSeries { get; set; } = new();
-
-        public ObservableCollection<string> AccountLabels { get; set; } = new();
-
-        public Func<double, string> AmountFormatter => val => val.ToString("N2");
-
-        partial void OnSelectedPeriodChanged(string oldValue, string newValue)
-        {
-            UpdateTotalBalanceSeries();
-        }
-
-        partial void OnSelectedAccountChanged(string oldValue, string newValue)
-        {
-            UpdateIncomeExpenseSeries();
-            UpdateCategorySeries();
         }
 
         private void UpdateTotalBalanceSeries()
@@ -383,6 +269,13 @@ namespace MyFinance.ViewModels
                 ? Transactions
                 : Transactions.Where(t => t.Account.Name == SelectedAccount);
 
+            var selectedCategories = SelectedCategories.ToList();
+            if (selectedCategories.Any())
+            {
+                filtered = filtered.Where(t => t.Category != null &&
+                                               selectedCategories.Contains(t.Category.Name));
+            }
+
             decimal totalIncome = filtered.Where(t => t.Type == "Income").Sum(t => t.Amount);
             decimal totalExpense = filtered.Where(t => t.Type == "Expense").Sum(t => t.Amount);
 
@@ -475,6 +368,13 @@ namespace MyFinance.ViewModels
                 ? Transactions
                 : Transactions.Where(t => t.Account.Name == SelectedAccount);
 
+            var selectedCategories = SelectedCategories.ToList();
+            if (selectedCategories.Any())
+            {
+                filtered = filtered.Where(t => t.Category != null &&
+                                               selectedCategories.Contains(t.Category.Name));
+            }
+
             // Доходы
             var incomeGroups = filtered
                 .Where(t => t.Type == "Income")
@@ -512,6 +412,148 @@ namespace MyFinance.ViewModels
             }
 
             OnPropertyChanged(nameof(CategorySeries));
+        }
+
+        private void UpdateSelectedCategoriesText()
+        {
+            var selected = CategoryOptions
+                .Where(c => c.IsSelected)
+                .Select(c => c.Name)
+                .ToList();
+
+            if (selected.Count == 0)
+                SelectedCategoriesText = "Категории";
+            else
+                SelectedCategoriesText = string.Join(", ", selected);
+        }
+
+
+        [RelayCommand]
+        private void AddTransaction()
+        {
+            var window = new Views.AddTransactionWindow();
+            window.Owner = App.Current.MainWindow;
+            if (window.ShowDialog() == true)
+            {
+                var tx = window.NewTransaction;
+                _db.Transactions.Add(tx);
+
+                // обновление баланса
+                var account = _db.Accounts.FirstOrDefault(a => a.Id == tx.AccountId);
+                if (tx.Type == "Income")
+                    account.Balance += tx.Amount;
+                else
+                    account.Balance -= tx.Amount;
+
+                _db.SaveChanges();
+                LoadTransactions();
+            }
+        }
+
+
+        [RelayCommand]
+        private void EditTransaction(Transaction transaction)
+        {
+            if (transaction == null) return;
+
+            // Создаём окно и передаём существующую транзакцию
+            var editWindow = new AddTransactionWindow(transaction); // нужно добавить конструктор с параметром
+            editWindow.Title = "Редактировать транзакцию";
+
+            if (editWindow.ShowDialog() == true)
+            {
+                // Если пользователь нажал OK, обновляем данные
+                var updatedTransaction = editWindow.NewTransaction;
+
+                // обновление баланса
+                var account = _db.Accounts.FirstOrDefault(a => a.Id == transaction.AccountId);
+                if (transaction.Type == "Income")
+                    account.Balance -= transaction.Amount;
+                else
+                    account.Balance += transaction.Amount;
+
+                // Находим транзакцию в БД
+                var txInDb = _db.Transactions.FirstOrDefault(t => t.Id == transaction.Id);
+                if (txInDb != null)
+                {
+                    txInDb.Type = updatedTransaction.Type;
+                    txInDb.Name = updatedTransaction.Name;
+                    txInDb.CategoryId = updatedTransaction.CategoryId;
+                    txInDb.AccountId = updatedTransaction.AccountId;
+                    txInDb.Amount = updatedTransaction.Amount;
+                    txInDb.Note = updatedTransaction.Note;
+                    txInDb.Date = updatedTransaction.Date;
+                }
+
+                // обновление баланса
+                if (updatedTransaction.Type == "Income")
+                    account.Balance += updatedTransaction.Amount;
+                else
+                    account.Balance -= updatedTransaction.Amount;
+
+                _db.SaveChanges();
+                LoadTransactions();
+            }
+        }
+
+        [RelayCommand]
+        private void DeleteTransaction(Transaction transaction)
+        {
+            if (transaction == null) return;
+
+            // Найти сущность в контексте
+            var trackedTransaction = _db.Transactions.FirstOrDefault(t => t.Id == transaction.Id);
+            if (trackedTransaction == null) return; // уже удалена
+
+            // Найти счёт
+            var account = _db.Accounts.FirstOrDefault(a => a.Id == trackedTransaction.AccountId);
+            if (trackedTransaction.Type == "Income")
+                account.Balance -= trackedTransaction.Amount; // уменьшаем доход
+            else
+                account.Balance += trackedTransaction.Amount; // возвращаем расход
+
+            _db.Transactions.Remove(trackedTransaction);
+            _db.SaveChanges();
+            LoadTransactions();
+        }
+
+        [RelayCommand]
+        private void OpenCategory()
+        {
+            var window = new Views.ManageCategoriesWindow();
+            window.Owner = App.Current.MainWindow;
+            window.ShowDialog();
+        }
+
+        [RelayCommand]
+        private void OpenAccount()
+        {
+            var window = new Views.ManageAccountsWindow();
+            window.Owner = App.Current.MainWindow;
+            window.ShowDialog();
+        }
+
+        public decimal TotalIncomeCurrentMonth =>
+            Transactions
+                .Where(t => t.Type == "Income" && t.Date.Month == DateTime.Now.Month && t.Date.Year == DateTime.Now.Year)
+                .Sum(t => t.Amount);
+
+        public decimal TotalExpensesCurrentMonth =>
+            Transactions
+                .Where(t => t.Type == "Expense" && t.Date.Month == DateTime.Now.Month && t.Date.Year == DateTime.Now.Year)
+                .Sum(t => t.Amount);
+        public string CurrentMonthName => DateTime.Now.ToString("MMMM", new CultureInfo("ru-RU"));
+
+        public IEnumerable<string> SelectedCategories =>
+            CategoryOptions
+                .Where(c => c.IsSelected)
+                .Select(c => c.Name);
+
+        partial void OnSelectedPeriodChanged(string oldValue, string newValue) => UpdateTotalBalanceSeries();
+        partial void OnSelectedAccountChanged(string oldValue, string newValue)
+        {
+            UpdateIncomeExpenseSeries();
+            UpdateCategorySeries();
         }
     }
 }
