@@ -6,7 +6,7 @@
         xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
         xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
         Title="Мои финансы" Height="700" Width="730" MinWidth="730" MaxWidth="730" MinHeight="500">
-
+    
     <Window.Resources>
         <local:DateLabelConverter x:Key="DateLabelConverter"/>
         <local:DateOnlyConverter x:Key="DateOnlyConverter"/>
@@ -216,12 +216,12 @@
 HorizontalAlignment="Left"
 VerticalAlignment="Top"
 Margin="10,0,0,0"
-Padding="10,5"
+Padding="5"
 Click="BackButton_Click"/>
             <TextBlock Text="Баланс (детальная информация)"
    VerticalAlignment="Top"
    HorizontalAlignment="Left"
-   Margin="100,5,0,0"
+   Margin="90,5,0,0"
    FontSize="16"
    FontWeight="Bold"/>
 
