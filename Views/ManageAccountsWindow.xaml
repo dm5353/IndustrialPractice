@@ -6,7 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MyFinance.Converters"
         mc:Ignorable="d"
-        Title="Управление счетами" Height="300" Width="290" ResizeMode="NoResize" HorizontalAlignment="Right">
+        Title="Управление счетами" Height="300" Width="290" ResizeMode="NoResize" HorizontalAlignment="Right" Icon="/Views/image.ico">
 
     <Window.Resources>
         <local:NullToBoolConverter x:Key="NullToBoolConverter"/>

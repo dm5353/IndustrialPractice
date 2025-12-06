@@ -115,6 +115,12 @@ namespace MyFinance.Views
                 return;
             }
 
+            if (amount <= 0)
+            {
+                MessageBox.Show("Некорректная сумма", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
             var date = DatePicker.SelectedDate ?? DateTime.Now;
 
             int hours = 0, minutes = 0, seconds = 0;

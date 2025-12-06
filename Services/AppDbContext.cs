@@ -13,7 +13,7 @@ namespace MyFinance.Services
         // При первом запуске закомментить!!! 
         public AppDbContext()
         {
-            if (!Accounts.Any()) // добавляем только если нет записей
+            /*if (!Accounts.Any()) // добавляем только если нет записей
             {
                 Accounts.Add(new Account { Name = "Карта", Balance = 0 });
                 Accounts.Add(new Account { Name = "Наличные", Balance = 0 });
@@ -37,7 +37,7 @@ namespace MyFinance.Services
                 Categories.Add(new Category { Name = "Образование", Type = "Expense", Color = "#FF1493" });
             }
 
-            SaveChanges();
+            SaveChanges();*/
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
