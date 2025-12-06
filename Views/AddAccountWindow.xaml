@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-        Title="Добавить счёт" Height="240" Width="210" ResizeMode="NoResize">
+        Title="Добавить счёт" Height="150" Width="207" ResizeMode="NoResize">
 
     <Grid Margin="10">
         <Grid.RowDefinitions>
@@ -18,14 +18,8 @@
             <TextBox x:Name="NameBox"/>
         </StackPanel>
 
-        <!-- Тип -->
-        <StackPanel Grid.Row="1" Margin="0 10 0 0">
-            <TextBlock Text="Баланс" Margin="0 0 0 3"/>
-            <TextBox x:Name="BalanceBox"/>
-        </StackPanel>
-
         <!-- Кнопки -->
-        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 15 0 0">
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 25 0 0">
             <Button Content="Ок" Width="80" Margin="0 0 10 0" Click="Ok_Click"/>
             <Button Content="Отмена" Width="80" Click="Cancel_Click"/>
         </StackPanel>
