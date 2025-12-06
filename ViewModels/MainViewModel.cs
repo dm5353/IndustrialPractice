@@ -18,6 +18,7 @@ namespace MyFinance.ViewModels
 {
     public partial class MainViewModel : ObservableObject
     {
+        #region Fields
         private readonly AppDbContext _db;
 
         [ObservableProperty] private decimal _totalIncome;
@@ -83,6 +84,7 @@ namespace MyFinance.ViewModels
                 OnPropertyChanged(nameof(SelectedCategoriesText));
             }
         }
+#endregion
 
         public MainViewModel()
         {
@@ -109,6 +111,8 @@ namespace MyFinance.ViewModels
         public void LoadTransactions()
         {
             Transactions.Clear();
+            ExpenseTransactions.Clear();
+            IncomeTransactions.Clear();
 
             var transactions = _db.Transactions
                 .Include(t => t.Category)   // подтягиваем категорию
