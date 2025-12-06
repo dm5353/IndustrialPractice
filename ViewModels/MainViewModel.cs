@@ -7,8 +7,11 @@ using MyFinance.Models;
 using MyFinance.Services;
 using MyFinance.Views;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Globalization;
 using System.Security.Principal;
+using System.Windows;
+using System.Windows.Data;
 using System.Windows.Media;
 
 namespace MyFinance.ViewModels
@@ -92,11 +95,15 @@ namespace MyFinance.ViewModels
 
         private void OnCategorySelectionChanged()
         {
+            RefreshHistory();
+
             UpdateSelectedCategoriesText();
             UpdateIncomeExpenseDiagram();
             UpdateCategoryDiagram();
             UpdateExpenseCategoryDiagram();
+            UpdateAccountExpensePieDiagram();
             UpdateIncomeCategoryDiagram();
+            UpdateAccountIncomePieDiagram();
         }
 
         public void LoadTransactions()
@@ -166,8 +173,8 @@ namespace MyFinance.ViewModels
 
         private void UpdateTotals()
         {
-            TotalIncome = Transactions.Where(t => t.Type == "Income").Sum(t => t.Amount);
-            TotalExpenses = Transactions.Where(t => t.Type == "Expense").Sum(t => t.Amount);
+            UpdateTotalIncome();
+            UpdateTotalExpenses();
 
             TotalBalance = _db.Accounts.Sum(a => a.Balance);
 
@@ -176,6 +183,23 @@ namespace MyFinance.ViewModels
 
             UpdatePieSeries();
         }
+
+        private void UpdateTotalExpenses()
+        {
+            var filtered = FilterByPeriod(ExpenseTransactions);
+            filtered = FilterByAccounts(filtered);
+            filtered = FilterByCategories(filtered);
+            TotalExpenses = filtered.Sum(t => t.Amount);
+        }
+
+        private void UpdateTotalIncome()
+        {
+            var filtered = FilterByPeriod(IncomeTransactions);
+            filtered = FilterByAccounts(filtered);
+            filtered = FilterByCategories(filtered);
+            TotalIncome = filtered.Sum(t => t.Amount);
+        }
+
 
         private void UpdatePieSeries()
         {
@@ -327,6 +351,7 @@ namespace MyFinance.ViewModels
 
             var filteredTransactions = FilterByPeriod(IncomeTransactions);
             filteredTransactions = FilterByAccounts(filteredTransactions);
+            filteredTransactions = FilterByCategories(filteredTransactions);
             if (!filteredTransactions.Any()) return;
 
             var accounts = _db.Accounts.ToList();
@@ -337,7 +362,7 @@ namespace MyFinance.ViewModels
                     .Where(t => t.AccountId == acc.Id)
                     .Sum(t => t.Amount);
 
-                if (income <= 0) continue; // можно пропустить счета без расходов
+                if (income <= 0) continue;
 
                 AccountIncomePieSeries.Add(new PieSeries
                 {
@@ -360,9 +385,7 @@ namespace MyFinance.ViewModels
             filteredTransactions = FilterByCategories(filteredTransactions);
             if (!filteredTransactions.Any()) return;
 
-            // Доходы
             var incomeGroups = filteredTransactions
-                .Where(t => t.Type == "Income")
                 .GroupBy(t => t.Category)
                 .ToList();
 
@@ -376,25 +399,6 @@ namespace MyFinance.ViewModels
                     DataLabels = true,
                     LabelPoint = cp => $"{cp.Participation:P0}",
                     Fill = category != null ? (SolidColorBrush)(new BrushConverter().ConvertFromString(category.Color)) : Brushes.Green
-                });
-            }
-
-            // Расходы
-            var expenseGroups = filteredTransactions
-                .Where(t => t.Type == "Expense")
-                .GroupBy(t => t.Category)
-                .ToList();
-
-            foreach (var group in expenseGroups)
-            {
-                var category = group.Key;
-                IncomeCategorySeries.Add(new PieSeries
-                {
-                    Title = $"{category?.Name ?? "Без категории"} - {group.Sum(t => t.Amount):N0} ₽",
-                    LabelPoint = cp => $"{cp.Participation:P0}",
-                    Values = new ChartValues<decimal> { group.Sum(t => t.Amount) },
-                    DataLabels = true,
-                    Fill = category != null ? (SolidColorBrush)(new BrushConverter().ConvertFromString(category.Color)) : Brushes.Red
                 });
             }
 
@@ -512,6 +516,7 @@ namespace MyFinance.ViewModels
 
             var filteredTransactions = FilterByPeriod(ExpenseTransactions);
             filteredTransactions = FilterByAccounts(filteredTransactions);
+            filteredTransactions = FilterByCategories(filteredTransactions);
             if (!filteredTransactions.Any()) return;
 
             var accounts = _db.Accounts.ToList();
@@ -522,7 +527,7 @@ namespace MyFinance.ViewModels
                     .Where(t => t.AccountId == acc.Id)
                     .Sum(t => t.Amount);
 
-                if (expense <= 0) continue; // можно пропустить счета без расходов
+                if (expense <= 0) continue;
 
                 AccountExpensePieSeries.Add(new PieSeries
                 {
@@ -544,28 +549,7 @@ namespace MyFinance.ViewModels
             filteredTransactions = FilterByCategories(filteredTransactions);
             if (!filteredTransactions.Any()) return;
 
-            // Доходы
-            var incomeGroups = filteredTransactions
-                .Where(t => t.Type == "Income")
-                .GroupBy(t => t.Category)
-                .ToList();
-
-            foreach (var group in incomeGroups)
-            {
-                var category = group.Key;
-                ExpenseCategorySeries.Add(new PieSeries
-                {
-                    Title = $"{category?.Name ?? "Без категории"} - {group.Sum(t => t.Amount):N0} ₽",
-                    Values = new ChartValues<decimal> { group.Sum(t => t.Amount) },
-                    DataLabels = true,
-                    LabelPoint = cp => $"{cp.Participation:P0}",
-                    Fill = category != null ? (SolidColorBrush)(new BrushConverter().ConvertFromString(category.Color)) : Brushes.Green
-                });
-            }
-
-            // Расходы
             var expenseGroups = filteredTransactions
-                .Where(t => t.Type == "Expense")
                 .GroupBy(t => t.Category)
                 .ToList();
 
@@ -1026,6 +1010,8 @@ namespace MyFinance.ViewModels
 
         partial void OnSelectedPeriodBalanceChanged(string oldValue, string newValue)
         {
+            RefreshHistory();
+
             UpdateBalanceDiagrams();
             UpdateExpenseDiagrams();
             UpdateIncomeDiagrams();
@@ -1038,12 +1024,80 @@ namespace MyFinance.ViewModels
         }
         partial void OnSelectedAccountsChanged(string oldValue, string newValue)
         {
+            RefreshHistory();
+
             UpdateIncomeExpenseDiagram();
             UpdateCategoryDiagram();
             UpdateExpenseCategoryDiagram();
             UpdateIncomeCategoryDiagram();
             UpdateAccountExpensePieDiagram();
             UpdateAccountIncomePieDiagram();
+        }
+
+        private void RefreshHistory()
+        {
+            UpdateTotalIncome();
+            UpdateTotalExpenses();
+
+            var cvsExpose = (CollectionViewSource)Application.Current.MainWindow.FindResource("GroupedExpenseTransactions");
+            cvsExpose.View.Refresh();
+
+            var cvsIncome = (CollectionViewSource)Application.Current.MainWindow.FindResource("GroupedIncomeTransactions");
+            cvsIncome.View.Refresh();
+        }
+
+        public bool ExpenseTransactionsFilter(object item)
+        {
+            if (item is Transaction tx)
+            {
+                bool categoryMatch =
+                    !SelectedCategories.Any() ||
+                    SelectedCategories.Contains(tx.Category?.Name);
+
+                bool accountMatch =
+                    SelectedAccounts == "Все" ||
+                    tx.Account?.Name == SelectedAccounts;
+
+                DateTime now = DateTime.Now.Date;
+                bool periodMatch = SelectedPeriodBalance switch
+                {
+                    "Неделя" => tx.Date.Date >= now.AddDays(-(int)now.DayOfWeek + 1),
+                    "Месяц" => tx.Date.Month == now.Month && tx.Date.Year == now.Year,
+                    "Год" => tx.Date.Year == now.Year,
+                    _ => true
+                };
+
+                return categoryMatch && accountMatch && periodMatch;
+            }
+
+            return false;
+        }
+
+        public bool IncomeTransactionsFilter(object item)
+        {
+            if (item is Transaction tx)
+            {
+                bool categoryMatch =
+                    !SelectedCategories.Any() ||
+                    SelectedCategories.Contains(tx.Category?.Name);
+
+                bool accountMatch =
+                    SelectedAccounts == "Все" ||
+                    tx.Account?.Name == SelectedAccounts;
+
+                DateTime now = DateTime.Now.Date;
+                bool periodMatch = SelectedPeriodBalance switch
+                {
+                    "Неделя" => tx.Date.Date >= now.AddDays(-(int)now.DayOfWeek + 1),
+                    "Месяц" => tx.Date.Month == now.Month && tx.Date.Year == now.Year,
+                    "Год" => tx.Date.Year == now.Year,
+                    _ => true
+                };
+
+                return categoryMatch && accountMatch && periodMatch;
+            }
+
+            return false;
         }
     }
 }

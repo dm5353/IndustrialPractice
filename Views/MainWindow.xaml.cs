@@ -1,5 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using MyFinance.ViewModels;
 
 namespace MyFinance.Views
 {
@@ -11,6 +13,12 @@ namespace MyFinance.Views
         public MainWindow()
         {
             InitializeComponent();
+
+            var cvsExpense = (CollectionViewSource)FindResource("GroupedExpenseTransactions");
+            cvsExpense.Filter += (s, e) => e.Accepted = ((MainViewModel)DataContext).ExpenseTransactionsFilter(e.Item);
+
+            var cvsIncome = (CollectionViewSource)FindResource("GroupedIncomeTransactions");
+            cvsIncome.Filter += (s, e) => e.Accepted = ((MainViewModel)DataContext).IncomeTransactionsFilter(e.Item);
         }
 
         private void Balance_Click(object sender, RoutedEventArgs e) => ShowDetail(BalanceDetail);
