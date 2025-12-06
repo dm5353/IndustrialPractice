@@ -25,14 +25,25 @@ namespace MyFinance.ViewModels
 
         private string _selectedCategoriesText = "Категории";
         [ObservableProperty] private string _selectedPeriod = "По дням";
-        [ObservableProperty] private string _selectedPeriodBalance = "За всё время";
+        [ObservableProperty] private string _selectedPeriodBalance = "Месяц";
         [ObservableProperty] private string _selectedAccounts = "Все";
 
         public SeriesCollection PieSeries { get; set; }
+
         public SeriesCollection TotalBalanceSeries { get; set; } = new();
+        public SeriesCollection TotalExpenseSeries { get; set; } = new();
+        public SeriesCollection TotalIncomeSeries { get; set; } = new();
+
         public SeriesCollection IncomeExpenseSeries { get; set; } = new();
+
         public SeriesCollection CategorySeries { get; set; } = new();
+        public SeriesCollection ExpenseCategorySeries { get; set; } = new();
+        public SeriesCollection IncomeCategorySeries { get; set; } = new();
+
         public SeriesCollection AccountBalancePieSeries { get; set; } = new();
+        public SeriesCollection AccountExpensePieSeries { get; set; } = new();
+        public SeriesCollection AccountIncomePieSeries { get; set; } = new();
+
         public SeriesCollection AccountBalanceLineSeries { get; set; } = new();
 
         public ObservableCollection<Transaction> Transactions { get; set; } = new();
@@ -41,8 +52,13 @@ namespace MyFinance.ViewModels
 
         public ObservableCollection<CategorySelectItem> CategoryOptions { get; set; } = new ObservableCollection<CategorySelectItem>();
         public ObservableCollection<string> AccountOptions { get; set; } = new ();
+
         public ObservableCollection<string> TotalBalanceLabels { get; set; } = new();
+        public ObservableCollection<string> TotalExpenseLabels { get; set; } = new();
+        public ObservableCollection<string> TotalIncomeLabels { get; set; } = new();
+
         public ObservableCollection<string> AccountLabels { get; set; } = new();
+
         public ObservableCollection<string> PeriodOptions { get; set; } = new ObservableCollection<string>
         {
             "По дням", "По неделям", "По месяцам", "По годам"
@@ -78,7 +94,9 @@ namespace MyFinance.ViewModels
         {
             UpdateSelectedCategoriesText();
             UpdateIncomeExpenseDiagram();
-            UpdateIncomeExpenseCategoryDiagram();
+            UpdateCategoryDiagram();
+            UpdateExpenseCategoryDiagram();
+            UpdateIncomeCategoryDiagram();
         }
 
         public void LoadTransactions()
@@ -119,6 +137,8 @@ namespace MyFinance.ViewModels
 
             UpdateTotals();
             UpdateBalanceDiagrams();
+            UpdateExpenseDiagrams();
+            UpdateIncomeDiagrams();
         }
 
         private void UpdateBalanceDiagrams()
@@ -127,7 +147,21 @@ namespace MyFinance.ViewModels
             UpdateAccountBalanceDiagram();
             UpdateAccountBalancePieDiagram();
             UpdateIncomeExpenseDiagram();
-            UpdateIncomeExpenseCategoryDiagram();
+            UpdateCategoryDiagram();
+        }
+
+        private void UpdateExpenseDiagrams()
+        {
+            UpdateExpenseDiagram();
+            UpdateAccountExpensePieDiagram();
+            UpdateExpenseCategoryDiagram();
+        }
+
+        private void UpdateIncomeDiagrams()
+        {
+            UpdateIncomeDiagram();
+            UpdateAccountIncomePieDiagram();
+            UpdateIncomeCategoryDiagram();
         }
 
         private void UpdateTotals()
@@ -182,6 +216,376 @@ namespace MyFinance.ViewModels
             OnPropertyChanged(nameof(PieSeries));
         }
 
+
+        private void UpdateIncomeDiagram()
+        {
+            TotalIncomeSeries.Clear();
+            TotalIncomeLabels.Clear();
+
+            var filteredTransactions = FilterByPeriod(Transactions).ToList();
+            if (!filteredTransactions.Any()) return;
+
+            DateTime startDate = filteredTransactions.Where(t => t.Type == "Income").Min(t => t.Date).Date;
+            DateTime endDate = DateTime.Now;
+
+            decimal runningBalance = 0;
+
+            var values = new ChartValues<double>();
+
+            switch (SelectedPeriod)
+            {
+                case "По дням":
+                    var dailySums = filteredTransactions
+                        .GroupBy(t => t.Date.Date)
+                        .ToDictionary(g => g.Key, g => g.Sum(t => t.Type == "Income" ? t.Amount : 0));
+
+                    for (var date = startDate; date <= endDate; date = date.AddDays(1))
+                    {
+                        if (dailySums.ContainsKey(date))
+                            runningBalance = dailySums[date];
+                        else runningBalance = 0;
+
+                        values.Add((double)runningBalance);
+                        TotalIncomeLabels.Add(date.ToString("dd.MM"));
+                    }
+                    break;
+
+                case "По неделям":
+                    var calendar = CultureInfo.CurrentCulture.Calendar;
+                    var weeklySums = filteredTransactions
+                        .GroupBy(t => calendar.GetWeekOfYear(t.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday))
+                        .OrderBy(g => g.Key)
+                        .ToDictionary(g => g.Key, g => g.Sum(t => t.Type == "Income" ? t.Amount : 0));
+
+                    int startWeek = calendar.GetWeekOfYear(startDate, CalendarWeekRule.FirstDay, DayOfWeek.Monday);
+                    int endWeek = calendar.GetWeekOfYear(endDate, CalendarWeekRule.FirstDay, DayOfWeek.Monday);
+
+                    for (int week = startWeek; week <= endWeek; week++)
+                    {
+                        if (weeklySums.ContainsKey(week))
+                            runningBalance = weeklySums[week];
+                        else runningBalance = 0;
+
+                        values.Add((double)runningBalance);
+                        TotalIncomeLabels.Add("Неделя " + week);
+                    }
+                    break;
+
+                case "По месяцам":
+                    var monthlySums = filteredTransactions
+                        .GroupBy(t => new { t.Date.Year, t.Date.Month })
+                        .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
+                        .ToDictionary(g => g.Key, g => g.Sum(t => t.Type == "Income" ? t.Amount : 0));
+
+                    for (var date = new DateTime(startDate.Year, startDate.Month, 1);
+                         date <= new DateTime(endDate.Year, endDate.Month, 1);
+                         date = date.AddMonths(1))
+                    {
+                        var key = new { date.Year, date.Month };
+                        if (monthlySums.ContainsKey(key))
+                            runningBalance = monthlySums[key];
+                        else runningBalance = 0;
+
+                        values.Add((double)runningBalance);
+                        TotalIncomeLabels.Add(date.ToString("MM.yyyy"));
+                    }
+                    break;
+
+                case "По годам":
+                    var yearlySums = filteredTransactions
+                        .GroupBy(t => t.Date.Year)
+                        .OrderBy(g => g.Key)
+                        .ToDictionary(g => g.Key, g => g.Sum(t => t.Type == "Income" ? t.Amount : 0));
+
+                    for (int year = startDate.Year; year <= endDate.Year; year++)
+                    {
+                        if (yearlySums.ContainsKey(year))
+                            runningBalance = yearlySums[year];
+                        else runningBalance = 0;
+
+                        values.Add((double)runningBalance);
+                        TotalIncomeLabels.Add(year.ToString());
+                    }
+                    break;
+            }
+
+            TotalIncomeSeries.Add(new ColumnSeries
+            {
+                Title = "Доходы",
+                Values = values,
+                ColumnPadding = 0,
+                MaxColumnWidth = 20
+            });
+
+            OnPropertyChanged(nameof(TotalIncomeLabels));
+            OnPropertyChanged(nameof(TotalIncomeSeries));
+        }
+        
+        private void UpdateAccountIncomePieDiagram()
+        {
+            AccountIncomePieSeries.Clear();
+
+            var filteredTransactions = FilterByPeriod(IncomeTransactions);
+            filteredTransactions = FilterByAccounts(filteredTransactions);
+            if (!filteredTransactions.Any()) return;
+
+            var accounts = _db.Accounts.ToList();
+
+            foreach (var acc in accounts)
+            {
+                var income = filteredTransactions
+                    .Where(t => t.AccountId == acc.Id)
+                    .Sum(t => t.Amount);
+
+                if (income <= 0) continue; // можно пропустить счета без расходов
+
+                AccountIncomePieSeries.Add(new PieSeries
+                {
+                    Title = $"{acc.Name} - {income:N0} ₽",
+                    Values = new ChartValues<double> { (double)income },
+                    LabelPoint = cp => $"{cp.Participation:P0}",
+                    DataLabels = true
+                });
+            }
+
+            OnPropertyChanged(nameof(AccountIncomePieSeries));
+        }
+        
+        private void UpdateIncomeCategoryDiagram()
+        {
+            IncomeCategorySeries.Clear();
+
+            var filteredTransactions = FilterByPeriod(IncomeTransactions);
+            filteredTransactions = FilterByAccounts(filteredTransactions);
+            filteredTransactions = FilterByCategories(filteredTransactions);
+            if (!filteredTransactions.Any()) return;
+
+            // Доходы
+            var incomeGroups = filteredTransactions
+                .Where(t => t.Type == "Income")
+                .GroupBy(t => t.Category)
+                .ToList();
+
+            foreach (var group in incomeGroups)
+            {
+                var category = group.Key;
+                IncomeCategorySeries.Add(new PieSeries
+                {
+                    Title = $"{category?.Name ?? "Без категории"} - {group.Sum(t => t.Amount):N0} ₽",
+                    Values = new ChartValues<decimal> { group.Sum(t => t.Amount) },
+                    DataLabels = true,
+                    LabelPoint = cp => $"{cp.Participation:P0}",
+                    Fill = category != null ? (SolidColorBrush)(new BrushConverter().ConvertFromString(category.Color)) : Brushes.Green
+                });
+            }
+
+            // Расходы
+            var expenseGroups = filteredTransactions
+                .Where(t => t.Type == "Expense")
+                .GroupBy(t => t.Category)
+                .ToList();
+
+            foreach (var group in expenseGroups)
+            {
+                var category = group.Key;
+                IncomeCategorySeries.Add(new PieSeries
+                {
+                    Title = $"{category?.Name ?? "Без категории"} - {group.Sum(t => t.Amount):N0} ₽",
+                    LabelPoint = cp => $"{cp.Participation:P0}",
+                    Values = new ChartValues<decimal> { group.Sum(t => t.Amount) },
+                    DataLabels = true,
+                    Fill = category != null ? (SolidColorBrush)(new BrushConverter().ConvertFromString(category.Color)) : Brushes.Red
+                });
+            }
+
+            OnPropertyChanged(nameof(IncomeCategorySeries));
+        }
+
+
+        private void UpdateExpenseDiagram()
+        {
+            TotalExpenseSeries.Clear();
+            TotalExpenseLabels.Clear();
+
+            var filteredTransactions = FilterByPeriod(Transactions).ToList();
+            if (!filteredTransactions.Any()) return;
+
+            DateTime startDate = filteredTransactions.Where(t => t.Type != "Income").Min(t => t.Date).Date;
+            DateTime endDate = DateTime.Now;
+
+            decimal runningBalance = 0;
+
+            var values = new ChartValues<double>();
+
+            switch (SelectedPeriod)
+            {
+                case "По дням":
+                    var dailySums = filteredTransactions
+                        .GroupBy(t => t.Date.Date)
+                        .ToDictionary(g => g.Key, g => g.Sum(t => t.Type != "Income" ? t.Amount : 0));
+
+                    for (var date = startDate; date <= endDate; date = date.AddDays(1))
+                    {
+                        if (dailySums.ContainsKey(date))
+                            runningBalance = dailySums[date];
+                        else runningBalance = 0;
+
+                            values.Add((double)runningBalance);
+                        TotalExpenseLabels.Add(date.ToString("dd.MM"));
+                    }
+                    break;
+
+                case "По неделям":
+                    var calendar = CultureInfo.CurrentCulture.Calendar;
+                    var weeklySums = filteredTransactions
+                        .GroupBy(t => calendar.GetWeekOfYear(t.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday))
+                        .OrderBy(g => g.Key)
+                        .ToDictionary(g => g.Key, g => g.Sum(t => t.Type != "Income" ? t.Amount : 0));
+
+                    int startWeek = calendar.GetWeekOfYear(startDate, CalendarWeekRule.FirstDay, DayOfWeek.Monday);
+                    int endWeek = calendar.GetWeekOfYear(endDate, CalendarWeekRule.FirstDay, DayOfWeek.Monday);
+
+                    for (int week = startWeek; week <= endWeek; week++)
+                    {
+                        if (weeklySums.ContainsKey(week))
+                            runningBalance = weeklySums[week];
+                        else runningBalance = 0;
+
+                        values.Add((double)runningBalance);
+                        TotalExpenseLabels.Add("Неделя " + week);
+                    }
+                    break;
+
+                case "По месяцам":
+                    var monthlySums = filteredTransactions
+                        .GroupBy(t => new { t.Date.Year, t.Date.Month })
+                        .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
+                        .ToDictionary(g => g.Key, g => g.Sum(t => t.Type != "Income" ? t.Amount : 0));
+
+                    for (var date = new DateTime(startDate.Year, startDate.Month, 1);
+                         date <= new DateTime(endDate.Year, endDate.Month, 1);
+                         date = date.AddMonths(1))
+                    {
+                        var key = new { date.Year, date.Month };
+                        if (monthlySums.ContainsKey(key))
+                            runningBalance = monthlySums[key];
+                        else runningBalance = 0;
+
+                        values.Add((double)runningBalance);
+                        TotalExpenseLabels.Add(date.ToString("MM.yyyy"));
+                    }
+                    break;
+
+                case "По годам":
+                    var yearlySums = filteredTransactions
+                        .GroupBy(t => t.Date.Year)
+                        .OrderBy(g => g.Key)
+                        .ToDictionary(g => g.Key, g => g.Sum(t => t.Type != "Income" ? t.Amount : 0));
+
+                    for (int year = startDate.Year; year <= endDate.Year; year++)
+                    {
+                        if (yearlySums.ContainsKey(year))
+                            runningBalance = yearlySums[year];
+                        else runningBalance = 0;
+
+                        values.Add((double)runningBalance);
+                        TotalExpenseLabels.Add(year.ToString());
+                    }
+                    break;
+            }
+
+            TotalExpenseSeries.Add(new ColumnSeries
+            {
+                Title = "Расходы",
+                Values = values,
+                ColumnPadding = 0,
+                MaxColumnWidth = 20
+            });
+
+            OnPropertyChanged(nameof(TotalExpenseLabels));
+            OnPropertyChanged(nameof(TotalExpenseSeries));
+        }
+
+        private void UpdateAccountExpensePieDiagram()
+        {
+            AccountExpensePieSeries.Clear();
+
+            var filteredTransactions = FilterByPeriod(ExpenseTransactions);
+            filteredTransactions = FilterByAccounts(filteredTransactions);
+            if (!filteredTransactions.Any()) return;
+
+            var accounts = _db.Accounts.ToList();
+
+            foreach (var acc in accounts)
+            {
+                var expense = filteredTransactions
+                    .Where(t => t.AccountId == acc.Id)
+                    .Sum(t => t.Amount);
+
+                if (expense <= 0) continue; // можно пропустить счета без расходов
+
+                AccountExpensePieSeries.Add(new PieSeries
+                {
+                    Title = $"{acc.Name} - {expense:N0} ₽",
+                    Values = new ChartValues<double> { (double)expense },
+                    LabelPoint = cp => $"{cp.Participation:P0}",
+                    DataLabels = true
+                });
+            }
+
+            OnPropertyChanged(nameof(AccountExpensePieSeries));
+        }
+        private void UpdateExpenseCategoryDiagram()
+        {
+            ExpenseCategorySeries.Clear();
+
+            var filteredTransactions = FilterByPeriod(ExpenseTransactions);
+            filteredTransactions = FilterByAccounts(filteredTransactions);
+            filteredTransactions = FilterByCategories(filteredTransactions);
+            if (!filteredTransactions.Any()) return;
+
+            // Доходы
+            var incomeGroups = filteredTransactions
+                .Where(t => t.Type == "Income")
+                .GroupBy(t => t.Category)
+                .ToList();
+
+            foreach (var group in incomeGroups)
+            {
+                var category = group.Key;
+                ExpenseCategorySeries.Add(new PieSeries
+                {
+                    Title = $"{category?.Name ?? "Без категории"} - {group.Sum(t => t.Amount):N0} ₽",
+                    Values = new ChartValues<decimal> { group.Sum(t => t.Amount) },
+                    DataLabels = true,
+                    LabelPoint = cp => $"{cp.Participation:P0}",
+                    Fill = category != null ? (SolidColorBrush)(new BrushConverter().ConvertFromString(category.Color)) : Brushes.Green
+                });
+            }
+
+            // Расходы
+            var expenseGroups = filteredTransactions
+                .Where(t => t.Type == "Expense")
+                .GroupBy(t => t.Category)
+                .ToList();
+
+            foreach (var group in expenseGroups)
+            {
+                var category = group.Key;
+                ExpenseCategorySeries.Add(new PieSeries
+                {
+                    Title = $"{category?.Name ?? "Без категории"} - {group.Sum(t => t.Amount):N0} ₽",
+                    LabelPoint = cp => $"{cp.Participation:P0}",
+                    Values = new ChartValues<decimal> { group.Sum(t => t.Amount) },
+                    DataLabels = true,
+                    Fill = category != null ? (SolidColorBrush)(new BrushConverter().ConvertFromString(category.Color)) : Brushes.Red
+                });
+            }
+
+            OnPropertyChanged(nameof(ExpenseCategorySeries));
+        }
+
+
         private void UpdateBalanceDiagram()
         {
             TotalBalanceSeries.Clear();
@@ -192,14 +596,20 @@ namespace MyFinance.ViewModels
 
             DateTime startDate = filteredTransactions.Min(t => t.Date).Date;
             DateTime endDate = DateTime.Now;
-            decimal runningBalance = 0;
+
+
+            decimal initialBalance = Transactions
+    .Where(t => t.Date < startDate)
+    .Sum(t => t.Type == "Income" ? t.Amount : -t.Amount);
+
+            decimal runningBalance = initialBalance;
 
             var values = new ChartValues<double>();
 
             switch (SelectedPeriod)
             {
                 case "По дням":
-                    var dailySums = Transactions
+                    var dailySums = filteredTransactions
                         .GroupBy(t => t.Date.Date)
                         .ToDictionary(g => g.Key, g => g.Sum(t => t.Type == "Income" ? t.Amount : -t.Amount));
 
@@ -215,14 +625,14 @@ namespace MyFinance.ViewModels
 
                 case "По неделям":
                     // получаем номер недели для каждой транзакции
-                    var calendar = System.Globalization.CultureInfo.CurrentCulture.Calendar;
-                    var weeklySums = Transactions
-                        .GroupBy(t => calendar.GetWeekOfYear(t.Date, System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Monday))
+                    var calendar = CultureInfo.CurrentCulture.Calendar;
+                    var weeklySums = filteredTransactions
+                        .GroupBy(t => calendar.GetWeekOfYear(t.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday))
                         .OrderBy(g => g.Key)
                         .ToDictionary(g => g.Key, g => g.Sum(t => t.Type == "Income" ? t.Amount : -t.Amount));
 
-                    int startWeek = calendar.GetWeekOfYear(startDate, System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Monday);
-                    int endWeek = calendar.GetWeekOfYear(endDate, System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Monday);
+                    int startWeek = calendar.GetWeekOfYear(startDate, CalendarWeekRule.FirstDay, DayOfWeek.Monday);
+                    int endWeek = calendar.GetWeekOfYear(endDate, CalendarWeekRule.FirstDay, DayOfWeek.Monday);
 
                     for (int week = startWeek; week <= endWeek; week++)
                     {
@@ -235,7 +645,7 @@ namespace MyFinance.ViewModels
                     break;
 
                 case "По месяцам":
-                    var monthlySums = Transactions
+                    var monthlySums = filteredTransactions
                         .GroupBy(t => new { t.Date.Year, t.Date.Month })
                         .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
                         .ToDictionary(g => g.Key, g => g.Sum(t => t.Type == "Income" ? t.Amount : -t.Amount));
@@ -254,7 +664,7 @@ namespace MyFinance.ViewModels
                     break;
 
                 case "По годам":
-                    var yearlySums = Transactions
+                    var yearlySums = filteredTransactions
                         .GroupBy(t => t.Date.Year)
                         .OrderBy(g => g.Key)
                         .ToDictionary(g => g.Key, g => g.Sum(t => t.Type == "Income" ? t.Amount : -t.Amount));
@@ -272,7 +682,7 @@ namespace MyFinance.ViewModels
 
             TotalBalanceSeries.Add(new ColumnSeries
             {
-                Title = "Общий баланс",
+                Title = "Баланс",
                 Values = values,
                 ColumnPadding = 0,
                 MaxColumnWidth = 20
@@ -319,21 +729,14 @@ namespace MyFinance.ViewModels
         {
             AccountBalancePieSeries.Clear();
 
-            var filteredTransactions = FilterByPeriod(Transactions);
-            if (!filteredTransactions.Any()) return;
-
             var accounts = _db.Accounts.ToList();
 
             foreach (var acc in accounts)
             {
-                decimal balance = filteredTransactions
-                    .Where(t => t.AccountId == acc.Id)
-                    .Sum(t => t.Type == "Income" ? t.Amount : -t.Amount);
-
                 AccountBalancePieSeries.Add(new PieSeries
                 {
-                    Title = $"{acc.Name} - {balance:N0} ₽",
-                    Values = new ChartValues<double> { (double)balance },
+                    Title = $"{acc.Name} - {acc.Balance:N0} ₽",
+                    Values = new ChartValues<double> { (double)acc.Balance },
                     LabelPoint = cp => $"{cp.Participation:P0}",
                     DataLabels = true
                 });
@@ -347,10 +750,16 @@ namespace MyFinance.ViewModels
             AccountBalanceLineSeries.Clear();
             AccountLabels.Clear();
 
-            var filteredTransactions = FilterByPeriod(Transactions);
+            var filteredTransactions = FilterByPeriod(Transactions).ToList();
             if (!filteredTransactions.Any()) return;
 
-            var dates = filteredTransactions.Select(t => t.Date.Date).Distinct().OrderBy(d => d).ToList();
+            DateTime startDate = filteredTransactions.Min(t => t.Date).Date;
+            DateTime endDate = DateTime.Now.Date;
+
+            var dates = Enumerable.Range(0, (endDate - startDate).Days + 1)
+                .Select(d => startDate.AddDays(d))
+                .ToList();
+
             foreach (var date in dates)
                 AccountLabels.Add(date.ToString("dd.MM"));
 
@@ -359,18 +768,20 @@ namespace MyFinance.ViewModels
             foreach (var account in accounts)
             {
                 var values = new ChartValues<double>();
-                decimal runningBalance = 0;
+
+                decimal initialBalance = Transactions
+                    .Where(t => t.AccountId == account.Id && t.Date < startDate)
+                    .Sum(t => t.Type == "Income" ? t.Amount : -t.Amount);
+
+                decimal runningBalance = initialBalance;
 
                 foreach (var date in dates)
                 {
-                    // Суммируем транзакции по данному счету на текущую дату
-                    var dailyTransactions = Transactions
+                    var dailyTransactions = filteredTransactions
                         .Where(t => t.AccountId == account.Id && t.Date.Date == date);
 
                     foreach (var t in dailyTransactions)
-                    {
                         runningBalance += t.Type == "Income" ? t.Amount : -t.Amount;
-                    }
 
                     values.Add((double)runningBalance);
                 }
@@ -387,7 +798,7 @@ namespace MyFinance.ViewModels
             OnPropertyChanged(nameof(AccountLabels));
         }
 
-        private void UpdateIncomeExpenseCategoryDiagram()
+        private void UpdateCategoryDiagram()
         {
             CategorySeries.Clear();
 
@@ -613,12 +1024,26 @@ namespace MyFinance.ViewModels
             return date.Date.AddDays(-diff);
         }
 
-        partial void OnSelectedPeriodBalanceChanged(string oldValue, string newValue) => UpdateBalanceDiagrams();
-        partial void OnSelectedPeriodChanged(string oldValue, string newValue) => UpdateBalanceDiagram();
+        partial void OnSelectedPeriodBalanceChanged(string oldValue, string newValue)
+        {
+            UpdateBalanceDiagrams();
+            UpdateExpenseDiagrams();
+            UpdateIncomeDiagrams();
+        }
+        partial void OnSelectedPeriodChanged(string oldValue, string newValue)
+        {
+            UpdateBalanceDiagram();
+            UpdateExpenseDiagram();
+            UpdateIncomeDiagram();
+        }
         partial void OnSelectedAccountsChanged(string oldValue, string newValue)
         {
             UpdateIncomeExpenseDiagram();
-            UpdateIncomeExpenseCategoryDiagram();
+            UpdateCategoryDiagram();
+            UpdateExpenseCategoryDiagram();
+            UpdateIncomeCategoryDiagram();
+            UpdateAccountExpensePieDiagram();
+            UpdateAccountIncomePieDiagram();
         }
     }
 }

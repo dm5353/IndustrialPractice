@@ -381,11 +381,11 @@ SelectedItem="{Binding SelectedPeriodBalance, Mode=TwoWay}"/>
                               SelectedItem="{Binding SelectedPeriod, Mode=TwoWay}"/>
                         </StackPanel>
 
-                        <lvc:CartesianChart Series="{Binding TotalExpensesSeries}"
+                        <lvc:CartesianChart Series="{Binding TotalExpenseSeries}"
                                     LegendLocation="None"
                                     Height="250">
                             <lvc:CartesianChart.AxisX>
-                                <lvc:Axis Title="Дата" Labels="{Binding TotalExpensesLabels}" />
+                                <lvc:Axis Title="Дата" Labels="{Binding TotalExpenseLabels}" />
                             </lvc:CartesianChart.AxisX>
                             <lvc:CartesianChart.AxisY>
                                 <lvc:Axis Title="Расходы" LabelFormatter="{Binding AmountFormatter}" />
@@ -436,11 +436,11 @@ ItemsSource="{Binding CategoryOptions}">
 
                             <!-- Баланс по счетам -->
                             <StackPanel Grid.Column="0" Grid.Row="3" Margin="5,15,5,0">
-                                <lvc:PieChart Series="{Binding }" LegendLocation="Bottom" Height="225"/>
+                                <lvc:PieChart Series="{Binding AccountExpensePieSeries}" LegendLocation="Bottom" Height="225"/>
                             </StackPanel>
                             <!-- Баланс по счетам и категориям-->
                             <StackPanel Grid.Column="1" Grid.Row="3" Margin="5,15,5,0">
-                                <lvc:PieChart Series="{Binding }" LegendLocation="Bottom" Height="250"/>
+                                <lvc:PieChart Series="{Binding ExpenseCategorySeries}" LegendLocation="Bottom" Height="250"/>
                             </StackPanel>
                         </Grid>
                         <!-- История операций -->
@@ -548,7 +548,7 @@ Margin="10,0,0,0"/>
             Padding="5"
             Click="BackButton_Click"/>
 
-            <!-- Общая сумма расходов -->
+            <!-- Общая сумма доходов -->
             <TextBlock Text="{Binding TotalIncome, Converter={StaticResource AmountWithSpaceConverter}}"
                VerticalAlignment="Top"
                HorizontalAlignment="Left"
@@ -569,7 +569,7 @@ SelectedItem="{Binding SelectedPeriodBalance, Mode=TwoWay}"/>
                 <Grid>
                     <StackPanel Margin="10,0,10,10">
 
-                        <!-- График общей суммы расходов по времени -->
+                        <!-- График общей суммы доходов по времени -->
                         <StackPanel Orientation="Horizontal" Margin="0,10,0,5" VerticalAlignment="Center">
                             <TextBlock Text="Доходы:" 
                                FontSize="18"
@@ -581,14 +581,14 @@ SelectedItem="{Binding SelectedPeriodBalance, Mode=TwoWay}"/>
                               SelectedItem="{Binding SelectedPeriod, Mode=TwoWay}"/>
                         </StackPanel>
 
-                        <lvc:CartesianChart Series="{Binding TotalExpensesSeries}"
+                        <lvc:CartesianChart Series="{Binding TotalIncomeSeries}"
                                     LegendLocation="None"
                                     Height="250">
                             <lvc:CartesianChart.AxisX>
-                                <lvc:Axis Title="Дата" Labels="{Binding TotalExpensesLabels}" />
+                                <lvc:Axis Title="Дата" Labels="{Binding TotalIncomeLabels}" />
                             </lvc:CartesianChart.AxisX>
                             <lvc:CartesianChart.AxisY>
-                                <lvc:Axis Title="Расходы" LabelFormatter="{Binding AmountFormatter}" />
+                                <lvc:Axis Title="Доходы" LabelFormatter="{Binding AmountFormatter}" />
                             </lvc:CartesianChart.AxisY>
                         </lvc:CartesianChart>
 
@@ -636,11 +636,11 @@ ItemsSource="{Binding CategoryOptions}">
 
                             <!-- Баланс по счетам -->
                             <StackPanel Grid.Column="0" Grid.Row="3" Margin="5,15,5,0">
-                                <lvc:PieChart Series="{Binding }" LegendLocation="Bottom" Height="225"/>
+                                <lvc:PieChart Series="{Binding AccountIncomePieSeries}" LegendLocation="Bottom" Height="225"/>
                             </StackPanel>
                             <!-- Баланс по счетам и категориям-->
                             <StackPanel Grid.Column="1" Grid.Row="3" Margin="5,15,5,0">
-                                <lvc:PieChart Series="{Binding }" LegendLocation="Bottom" Height="250"/>
+                                <lvc:PieChart Series="{Binding IncomeCategorySeries}" LegendLocation="Bottom" Height="250"/>
                             </StackPanel>
                         </Grid>
                         <!-- История операций -->
