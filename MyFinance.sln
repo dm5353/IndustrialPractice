@@ -5,6 +5,8 @@ VisualStudioVersion = 17.14.36623.8
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyFinance", "MyFinance.csproj", "{7674C1E8-AFEB-46C8-AF8C-0C1F26532923}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestMyFinance", "..\TestMyFinance\TestMyFinance.csproj", "{6F3CEF2A-C8E2-4A97-A7AD-61A8EEA8F119}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{7674C1E8-AFEB-46C8-AF8C-0C1F26532923}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7674C1E8-AFEB-46C8-AF8C-0C1F26532923}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7674C1E8-AFEB-46C8-AF8C-0C1F26532923}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F3CEF2A-C8E2-4A97-A7AD-61A8EEA8F119}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F3CEF2A-C8E2-4A97-A7AD-61A8EEA8F119}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F3CEF2A-C8E2-4A97-A7AD-61A8EEA8F119}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F3CEF2A-C8E2-4A97-A7AD-61A8EEA8F119}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
