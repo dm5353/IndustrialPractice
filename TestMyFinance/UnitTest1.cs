@@ -1,3 +1,5 @@
+using MyFinance;
+
 namespace TestMyFinance
 {
     public class UnitTest1
