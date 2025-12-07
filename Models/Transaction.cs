@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace MyFinance.Models
+﻿namespace MyFinance.Models
 {
     public class Transaction
     {
@@ -12,10 +10,9 @@ namespace MyFinance.Models
         public DateTime Date { get; set; }
 
         public int CategoryId { get; set; }
-        public Category Category { get; set; } // <- имя категории
+        public Category Category { get; set; }
 
         public int AccountId { get; set; }
-        public Account Account { get; set; }   // <- имя счета
+        public Account Account { get; set; }
     }
-
 }

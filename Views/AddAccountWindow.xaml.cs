@@ -1,7 +1,5 @@
 ﻿using MyFinance.Models;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
 
 namespace MyFinance.Views
 {
